@@ -36,7 +36,10 @@
 The tables can be of two types: 
 - A collection of columns with common row specifiers, really a 
   collection of f(x;y) where y is a parameter
-- 2 dimensional tables of values, such as f(x,y)"))
+- 2 dimensional tables of values, such as f(x,y)
+
+The table type depends primarily on the primarily mode of access
+Also the internal data storage is determined by table type"))
 
 
 (in-package #:numeric-table)
