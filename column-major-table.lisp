@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-08-02 13:44:19 column-major-table.lisp>
+;; Time-stamp: <2012-11-03 22:37:28Eastern Daylight Time column-major-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -134,7 +134,7 @@ name and column type"
     (insert-row '(3 4) test-table)
     (assert-number-equal 1 (row-count test-table))
     (assert-numerical-equal #(3 4)
-			    (table-row 0 test-table))))
+			    (nth-row 0 test-table))))
 
 (defparameter *test-table*
   (with-bare-test-table
@@ -159,9 +159,9 @@ name and column type"
     (insert-row '(8 5) test-table)
     (assert-number-equal 2 (row-count test-table))
     (assert-numerical-equal #(3 4)
-			    (table-row 0 test-table))
+			    (nth-row 0 test-table))
     (assert-numerical-equal #(8 5)
-			    (table-row 1 test-table))
+			    (nth-row 1 test-table))
     (assert-numerical-equal #(3 8)
 			    (table-column 0 test-table))))
 
@@ -173,6 +173,11 @@ name and column type"
    (position column-name (schema table)
 	     :key #'name)
    table))
+
+(defmethod table-column ((column-index integer)
+			 (table column-major-table))
+  "Return column contents of column at COLUMN-INDEX position"
+  (nth-column column-index table))
 #|
 (defmethod set-table-column ((table column-major-table)
 			     (column-index integer)
@@ -204,7 +209,16 @@ name and column type"
   (if (listp thing) thing (list thing)))
 
 
-(defun extractor ())
+
+(defgeneric restrict-rows ((table column-major-table) where)
+  (let )
+
+(defun extractor (schema)
+  "Return a function that when applied to a row will only return rows
+specified in the new schema"
+  (let ((names (column-names schema)))
+    #'(lambda (row)
+        (loop for c in names collect c collect (getf row c)))))
 
 (defun project-columns (rows schema table)
   (map 'vector (extractor schema) rows))|#
@@ -213,11 +227,12 @@ name and column type"
 
 
 
-(defun column-matcher (column value table)
+(defun column-matcher (column-schema value table)
   "Return a function of a single argument N-row, the row index.  This
-  function returns true if the ROW's column value matches VALUE.
+function returns true if the ROW's column value matches VALUE.  This
+function is used to search for a value in a specific column
 
-- COLUMN -- a column schema
+- COLUMN-SCHEMA -- a column schema
 
 - VALUE -- value that we are trying to match.  It is normalized prior
 to matching
@@ -226,9 +241,9 @@ to matching
 
 Based on PCL p. 395"
 ;;  (declare (ignore type))
-  (let* ((n-column (i-column column))
-	 (predicate (equality-predicate column))
-	 (normalized (normalize-for-column value column)))
+  (let* ((n-column (i-column column-schema))
+	 (predicate (equality-predicate column-schema))
+	 (normalized (normalize-for-column value column-schema)))
     (assert n-column ()
 	    "Column index:~a is nil" n-column)
     #'(lambda (N-row)
@@ -237,10 +252,10 @@ Based on PCL p. 395"
 		       N-row)
 		 normalized))))
 
-(define-test column-matcher
+(define-test column-schema-matcher
   (let* ((schema (schema *test-table*))
-	 (column (find-column 'delta schema))
-	 (fun (column-matcher column 3 *test-table*)))
+	 (column-schema (find-column 'delta schema))
+	 (fun (column-matcher column-schema 3 *test-table*)))
     (assert-true (funcall fun 0))
     (assert-true (not (funcall fun 1)))))
 
@@ -284,19 +299,19 @@ PCL p. 395"
     (assert-true (not (funcall mf 1)))))
 
 
-(defmethod value ((from column-major-table) &key where column-name)
+(defmethod value ((table column-major-table) &key where column-name)
   "Return a table value
-- FROM -- the table
+- TABLE -- the table
 - WHERE -- a function that will return a row index
 - COLUMN -- column name, as stored in the schema
 
 The WHERE function is used to find the first matching instance.  
 
 The function returns nil if no value matches the WHERE and COLUMN-NAME"
-  (let* ((table (table from))
-	 (schema (schema from))
+  (let* ((table (table table))
+	 (schema (schema table))
 	 ;; we now select the matching rows
-	 (i-row (loop for i below (row-count from)
+	 (i-row (loop for i below (row-count table)
 		   when (funcall where i)
 		   do (return i))))
     (when i-row

@@ -1,0 +1,56 @@
+2012-11-02  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* generic-table.lisp (restrict-rows): Made it into a generic
+	function.
+
+2012-11-01  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table.lisp (insert-row, table-column): Replaced
+	calls to table-row by nth-row.  Now the tests pass.
+
+2012-08-02  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table.lisp (make-table): Added build-method,
+	data-source and data-author as keywords to argument list.
+
+	* generic-table.lisp (make-table): Added build-method, data-source
+	and data-author as keywords to argument list.  Also added
+	&allow-other-keys
+
+	* numeric-table-package-def.lisp (#:numeric-table): Added symbols
+	number, symbol, custom to the export list.
+
+	* column-major-table.lisp (column-documentation): New method for
+	column-major-tables
+
+	* generic-table.lisp (column): Added documentation slot to column
+	class
+	(make-column): Added documentation keyword to argument list and
+	modified code to store documentation string into the documentation
+	slot.
+	(column-documentation): New generic function to access column
+	documentation.  Added to export list
+
+	* column-major-table.lisp (table-column): Added public method and
+	exporting its name
+	(column-names): New generic function operating on schma and tables.
+
+2012-04-25  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* generic-table.lisp (numeric-table): Changed accessors to
+	data-source and data-author to `:accessor'
+	(numeric-table): Fixed typoein `data-author' accessor
+
+2012-04-24  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table.lisp (make-schema): Modified to set i-column
+	to each column schema
+
+	* generic-table.lisp (numeric-table): Fixed type in schema slot
+	accessor
+	(column): Added slot i-column, needed by column-major-table
+	selection functions
+
+	* column-major-table.lisp (nth-row nth-column): Renamed table-row
+	and table-column
+

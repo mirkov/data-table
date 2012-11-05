@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-08-02 12:31:30 generic-table.lisp>
+;; Time-stamp: <2012-11-02 20:05:35Eastern Daylight Time generic-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -66,6 +66,8 @@ Methods may add additional keys"))
 				    &allow-other-keys)
   (:documentation 
 "Load COLUMN-VECTOR into TABLE column specified by COLUMN-ID
+
+COLUMN-ID can be the column name or column index
 
 OVERWRITE, if T, allows an existing column to be overwritten"))
 
@@ -217,12 +219,12 @@ COLUMN-NAME is the name of the column")
   (loop for c in column-names
        collect (find-column c schema)))
 
-(defun restrict-rows (table where)
-  "Return a list of TABLE row indices when the TABLE row satisfies
-WHERE"
-  (loop for i below (row-count table)
-       when (funcall where i)
-       collect i))
+(defgeneric restrict-rows (table where)
+  (:documentation "Return a new table with rows that satisfy WHERE
+TABLE is the table containing the original rows
+
+Particular methods can take considerable latitutude in how they will
+implement this method.  Read their documentation"))
 
 (defgeneric value (table &key where column-name &allow-other-keys)
   (:documentation 
