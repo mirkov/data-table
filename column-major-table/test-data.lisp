@@ -11,9 +11,17 @@
       (4.4 2.9 1.4 0.2 SETOSA)
       (4.9 3.1 1.5 0.1 SETOSA)
       (5.4 3.7 1.5 0.2 SETOSA))
-  "Plant data copied from ...")
+  "Plant data copied from post on cl-stat forum")
 
-(defparameter *plant-table*
+(defparameter *column-names*
+  '(sepal-length sepal-width petal-length petal-width specie)
+  "Column names for data in *flower-data*")
+
+(defparameter *column-types*
+  '(number number number number symbol)
+  "Data types of columns in *flower-data*")
+
+#|(defparameter *plant-table*
   (let ((table
 	 (make-table 'column-major-table
 		     (make-schema 'column-major-table
@@ -76,4 +84,4 @@
   (assert-equal
    (value *plant-table* :where (matching-rows *plant-table* '(sepal-length 5.4))
        :column-name 'sepal-width)
-   3.9))
+   3.9))|#

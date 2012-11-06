@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-11-02 20:05:35Eastern Daylight Time generic-table.lisp>
+;; Time-stamp: <2012-11-05 22:54:46Eastern Standard Time generic-numeric-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -22,15 +22,15 @@
 (defclass numeric-table ()
   ((table :accessor table :initarg :table)
    (row-count :reader row-count
-	 :initform 0
-	 :documentation "Return number of rows
+	      :initform 0
+	      :documentation "Return number of rows
 In case of variable row count return values 'variable and max-row-count")
    (column-count :reader column-count
-	    :documentation "Return number of columns
+		 :documentation "Return number of columns
 In case of a variable column count, return values 'variable and max-column-count"
-	    :initform 0)
-   (schema :accessor schema :initarg :schema
-	   :documentation "Stores table meta-data 
+		 :initform 0)
+   (table-schema :accessor table-schema :initarg :table-schema
+		 :documentation "Stores table meta-data 
 
 - Column names
 - Functions for setting and comparing column values")
@@ -47,16 +47,16 @@ It can be a file, a computation, interactive, or something else")
 This can be a journal reference or something else"))
   (:documentation "Stores a numeric table"))
 
-(defgeneric make-table (type schema &key build-method data-source data-author
+(defgeneric make-table (type table-schema &key build-method
+			     data-source data-author
 			     &allow-other-keys)
-  (:documentation "Make a table of given TYPE and specify the SCHEMA
-Optionally specify BUILD-METHOD, DATA-SOURCE, DATA-AUTHOR
+  (:documentation "Make a table of given TYPE and specify the
+TABLE-SCHEMA Optionally specify BUILD-METHOD, DATA-SOURCE, DATA-AUTHOR
 
 Methods may add additional keys"))
 
 (defgeneric table-column (name table)
-  (:documentation "Return column from TABLE using column NAME, as
-  defined in the column schema"))
+  (:documentation "Return the COLUMN from TABLE using column NAME"))
 
 (defgeneric nth-column (n table)
   (:documentation "Return the N-th column of TABLE"))
@@ -88,10 +88,10 @@ For some tables, that have variable length rows or columns, the table
 size might not be meaningful"))
 
 ;;; Schema functionality
-(defgeneric make-schema (type spec)
-  (:documentation "Create table schema based on SPEC for table TYPE"))
+(defgeneric make-table-schema (type spec)
+  (:documentation "Create TABLE-SCHEMA based on SPEC for table TYPE"))
 
-(defclass column ()
+(defclass column-schema ()
   ((name :reader name
 	 :initarg :name)
    (equality-predicate :reader equality-predicate
@@ -115,18 +115,22 @@ size might not be meaningful"))
    (i-column :reader i-column
 	     :initarg :i-column
 	     :initform nil
-	     :documentation "Stores the column index in the table")
+	     :documentation "Stores the column index")
    (documentation :initarg :documentation
 		  :initform nil
 		  :reader column-documentation%
-		  :documentation "Text describing the documentation"))
+		  :documentation "Text describing the documentation")
+   (empty-value :initarg :empty-value
+		:initform nil
+		:reader empty-value
+		:documentation "Value that signifies an empty cell"))
   (:documentation "Store the schema for a column"))
 
-(defgeneric make-column (name type
+(defgeneric make-column-schema (name type
 			      &key comparator equality-predicate
-			      default-type documentation
+			      default-type documentation empty-value
 			      &allow-other-keys)
-  (:documentation "Make instance of COLUMN object with NAME and
+  (:documentation "Make instance of COLUMN-SCHEMA object with NAME and
   specialized to hold data of TYPE
 
 If TYPE is 'custom, then keywords COMPARATOR, EQUALITY-PREDICATE,
@@ -136,88 +140,104 @@ COMPARATOR and EQUALITY-PREDICATE must be functions that accept two
 arguments and return t or nil
 
 DEFAULT-TYPE must be a type specification that will be passed to TYPEP.
+
+EMPTY-VALUE is the value that signifies an unspecified cell
 ")
   (:method  (name (type (eql 'string)) &key documentation &allow-other-keys)
-    (make-instance 'column
+    (make-instance 'column-schema
 		   :name name
 		   :comparator #'string<
 		   :equality-predicate #'string=
 		   :default-type 'string
 		   :documentation documentation))
   (:method  (name (type (eql 'number)) &key documentation &allow-other-keys)
-    (make-instance 'column
+    (make-instance 'column-schema
 		   :name name
 		   :comparator #'<
 		   :equality-predicate #'=
 		   :default-type 'number
 		   :documentation documentation))
   (:method (name (type (eql 'symbol)) &key documentation &allow-other-keys)
-    (make-instance 'column
+    (make-instance 'column-schema
 		   :name name
 		   :comparator #'(lambda (arg1 arg2)
-				   (string< (symbol-name arg1)
-					    (symbol-name arg2)))
+				   (string<  arg1
+					     arg2))
 		   :equality-predicate #'eq
 		   :default-type 'symbol
 		   :documentation documentation))
-  (:method (name (type (eql 'custom)) &key comparator equality-predicate default-type documentation)
-    (make-instance 'column
+  (:method (name (type (eql 'custom)) &key comparator equality-predicate default-type documentation empty-value)
+    (make-instance 'column-schema
 		   :name name
 		   :comparator comparator
 		   :equality-predicate equality-predicate
 		   :default-type default-type
+		   :empty-value empty-value
 		   :documentation documentation)))
 
+;;; Loading of value-normalizer.  By default they check that the value
+;;; is of correct type, as specified by default type
+;;;
+;;; I initialize it only after default-type is loaded.
 (defmethod initialize-instance :after ((self (eql 'string)) &key)
   (with-slots (value-normalizer default-type) self
-  (setf value-normalizer
-	#'(lambda (value column)
-	    (declare (ignore column))
-	    (assert (typep value default-type))))))
+    (setf value-normalizer
+	  #'(lambda (value column-schema)
+	      (declare (ignore column-schema))
+	      (assert (typep value default-type))))))
 (defmethod initialize-instance :after ((self (eql 'number)) &key)
   (with-slots (value-normalizer default-type) self
   (setf value-normalizer
-	#'(lambda (value column)
-	    (declare (ignore column))
+	#'(lambda (value column-schema)
+	    (declare (ignore column-schema))
 	    (assert (typep value default-type))))))
 (defmethod initialize-instance :after ((self (eql 'symbol)) &key)
   (with-slots (value-normalizer default-type) self
   (setf value-normalizer
-	#'(lambda (value column)
-	    (declare (ignore column))
+	#'(lambda (value column-schema)
+	    (declare (ignore column-schema))
 	    (assert (typep value default-type))))))
 (defmethod initialize-instance :after ((self (eql 'index)) &key)
   (with-slots (value-normalizer default-type) self
   (setf value-normalizer
-	#'(lambda (value column)
-	    (declare (ignore column))
+	#'(lambda (value column-schema)
+	    (declare (ignore column-schema))
 	    (assert (typep value default-type))))))
 
-(defgeneric normalize-value (value column column-schema)
+(defgeneric normalize-value (value column-schema)
   (:documentation "Normalize VALUE according to COLUMN-SCHEMA")
-  (:method (value column column-schema)
+  (:method (value column-schema)
     (funcall (slot-value column-schema 'value-normalizer)
-	     value column)))
+	     value column-schema)))
 
-(defun normalize-for-column (value column)
-  "PCL, p. 390"
-  (funcall (value-normalizer column) value column))
+(defun normalize-for-column (value column-schema)
+  "Normalize VALUE according to specifications in COLUMN-SCHEMA"
+  (funcall (value-normalizer column-schema) value column-schema))
 
-(defun find-column (column-name schema)
-  (or (find column-name schema :key #'name)
+(defun find-column-schema (column-name table-schema)
+  "Return column-schema whose column-name matches the one in
+table-schema"
+  (or (find column-name table-schema :key #'name)
       (error "No column: ~a in schema: ~a"
-	     column-name schema)))
+	     column-name table-schema)))
+
+(defgeneric column-names (table/table-schema)
+  (:documentation "Return list of column names from table or table schema")
+  (:method ((table-schema cons))
+    (mapcar #'column-name table-schema))
+  (:method ((table numeric-table))
+    (column-names (table-schema table))))
 
 (defgeneric column-documentation (column-name object)
   (:documentation "Return column documentation from OBJECT
 COLUMN-NAME is the name of the column")
   (:method ((column-name symbol) (schema cons))
-    (column-documentation% (find-column column-name schema))))
+    (column-documentation% (find-column-schema column-name schema))))
 
 
-(defun extract-schema (column-names schema)
+(defun extract-column-schema (column-names table-schema)
   (loop for c in column-names
-       collect (find-column c schema)))
+       collect (find-column c table-schema)))
 
 (defgeneric restrict-rows (table where)
   (:documentation "Return a new table with rows that satisfy WHERE
@@ -228,5 +248,9 @@ implement this method.  Read their documentation"))
 
 (defgeneric value (table &key where column-name &allow-other-keys)
   (:documentation 
-"Return a TABLE value.  WHERE is a function that returns a row index
+"Return a TABLE value.
+
+WHERE is a function of ROW and returns T or a generalized boolean for
+the desired row.
+
 COLUMN-NAME is a column name as stored in the schema"))

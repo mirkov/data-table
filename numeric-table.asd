@@ -9,8 +9,25 @@
   :depends-on (#:lisp-unit
 	       #:alexandria
 	       #:anaphora)
-  :components ((:file "numeric-table-package-def")
-               (:file "generic-table")
-	       (:file "column-major-table")
-	       (:file "2d-table")))
+  :components
+  ((:module "init"
+	    :serial t
+	    :components
+	    ((:file "numeric-table-package-def")
+	     (:file "utilities")
+	     (:file "generic-numeric-table")))
+   (:module "column-major-table"
+	    :serial t
+	    :components
+	    ((:file "test-data")
+	     (:file "column-major-table-classes")
+	     (:file "table-building")
+	     (:file "table-queries")
+	     #|(:file "matching-functions")
+	     (:file "data-access")|#)
+	    )
+   #+2d-table-implemented
+   (:module "2d-table"
+	    :components
+	    ((:file "2d-table")))))
 

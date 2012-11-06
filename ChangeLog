@@ -1,3 +1,38 @@
+2012-11-05  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/data-access.lisp (table-size): Ported to new file
+	(nth-row, table-column): 
+
+2012-11-04  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* init/generic-numeric-table.lisp (find-column-schema): renamed
+	`find-column' into `find-column-schema'
+	(column-documentation): Changed call to `find-column' to
+	`find-column-schema'
+
+	* column-major-table/column-major-table.lisp (insert-row): Changed call to `normalize-value' to follow new convention
+
+	* init/generic-numeric-table.lisp (column-schema)
+	(normalize-value): Changed old argument list.  Before it was
+	value, column, column-schema.  Now it is value, column-schema
+
+	* column-major-table/column-major-table.lisp (make-table-schema)
+	(table-column, column-matchers, value, make-table, column-names)
+	(insert-row, column-documentation): Starting to use new
+	nomenclature where instead of `column' I use `column-schema' and
+	instead of `schema' I use `table-schema'.  This mirrors changes in
+	../init/generic-numeric-table.lisp
+
+	* init/generic-numeric-table.lisp (make-column): Removed the
+	`symbol-name' function calls since `string<' operates also on
+	symbols
+	(normalize-value, normalize-for-column, extract-column-schema)
+	(numeric-table, make-table-schema, column-schema)
+	(make-column-schema): Starting to use new nomenclature where
+	instead of `column' I use `column-schema' and instead of `schema'
+	I use `table-schema'
+
+
 2012-11-02  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* generic-table.lisp (restrict-rows): Made it into a generic
