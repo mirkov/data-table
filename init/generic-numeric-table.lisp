@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-11-05 22:54:46Eastern Standard Time generic-numeric-table.lisp>
+;; Time-stamp: <2012-11-07 21:58:56Eastern Standard Time generic-numeric-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -123,7 +123,8 @@ size might not be meaningful"))
    (empty-value :initarg :empty-value
 		:initform nil
 		:reader empty-value
-		:documentation "Value that signifies an empty cell"))
+		:documentation "Value that signifies an empty cell")
+   )
   (:documentation "Store the schema for a column"))
 
 (defgeneric make-column-schema (name type
@@ -151,6 +152,14 @@ EMPTY-VALUE is the value that signifies an unspecified cell
 		   :default-type 'string
 		   :documentation documentation))
   (:method  (name (type (eql 'number)) &key documentation &allow-other-keys)
+    (make-instance 'column-schema
+		   :name name
+		   :comparator #'<
+		   :equality-predicate #'=
+		   :default-type 'number
+		   :documentation documentation))
+  (:method  (name (type (eql 'foreign-double-float))
+			&key documentation &allow-other-keys)
     (make-instance 'column-schema
 		   :name name
 		   :comparator #'<
@@ -191,6 +200,13 @@ EMPTY-VALUE is the value that signifies an unspecified cell
 	#'(lambda (value column-schema)
 	    (declare (ignore column-schema))
 	    (assert (typep value default-type))))))
+(defmethod initialize-instance :after ((self (eql 'foreign-double-float)) &key)
+  (with-slots (value-normalizer default-type) self
+  (setf value-normalizer
+	#'(lambda (value column-schema)
+	    (declare (ignore column-schema))
+	    (assert (typep value default-type))
+	    (float value 1d0)))))
 (defmethod initialize-instance :after ((self (eql 'symbol)) &key)
   (with-slots (value-normalizer default-type) self
   (setf value-normalizer

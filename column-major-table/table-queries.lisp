@@ -39,7 +39,7 @@ columns identified by column-name of the new TABLE-SCHEMA")
   (loop :for c in column-names
      :collect (find-column c schema)))
 
-(defun restrict-rows (data where)
+(defmethod restrict-rows (data where)
   (remove-if-not data where))
 
 (defun project-columns (data schema))

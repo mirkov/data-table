@@ -2,13 +2,15 @@
 
 (asdf:defsystem #:numeric-table
   :serial t
-  :description "Storage and queries of tabular data"
+  :description "Storage, queries, filtering, and numerical analysis of
+  tabular data"
   :author "Mirko Vukovic <mirko.vukovic@us.tel.com>"
   :version "0.1"
   :license "Unspecified"
-  :depends-on (#:lisp-unit
-	       #:alexandria
-	       #:anaphora)
+  :depends-on ("lisp-unit"
+	       "alexandria"
+	       "anaphora"
+	       "antik")
   :components
   ((:module "init"
 	    :serial t
@@ -24,7 +26,8 @@
 	     (:file "table-building")
 	     (:file "table-queries")
 	     #|(:file "matching-functions")
-	     (:file "data-access")|#)
+	     (:file "data-access")|#
+	     (:file "interpolated-data"))
 	    )
    #+2d-table-implemented
    (:module "2d-table"

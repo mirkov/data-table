@@ -1,3 +1,9 @@
+2012-11-07  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/column-major-table-classes.lisp
+	(column-names): Removing from this file, as it is already defined
+	in generic-numeric-table.lisp
+
 2012-11-05  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/data-access.lisp (table-size): Ported to new file

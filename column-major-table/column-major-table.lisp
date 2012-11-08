@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-11-05 21:47:44Eastern Standard Time column-major-table.lisp>
+;; Time-stamp: <2012-11-07 21:29:31Eastern Standard Time column-major-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -48,15 +48,6 @@ name and column type"
     (assert-number-equal 1 (i-column (second schema)))
     (assert-equal 'delta (name (first schema)))))
 
-
-(defgeneric column-names (object)
-  (:documentation "Return list of column names.  OBJECT can be a table
-  or a schema")
-  (:method ((schema cons))
-    (loop :for column-def in schema
-	 :collect (name column-def)))
-  (:method ((table column-major-table))
-    (column-names (table-schema table))))
 
 (defmethod column-documentation ((column-name symbol)
 				  (table column-major-table))
@@ -131,21 +122,6 @@ name and column type"
 
 
 ;;; Selection and value return functions modeled after PCL 392
-
-
-#|
-;;; Code for selection
-(defun mklist (thing)
-  (if (listp thing) thing (list thing)))
-
-
-
-(defgeneric restrict-rows ((table column-major-table) where)
-  (let )
-
-
-
-
 
 
 
