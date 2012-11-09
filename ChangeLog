@@ -1,3 +1,16 @@
+2012-11-08  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* init/generic-numeric-table.lisp: Moved foreign-doble-float to
+	the interpolated-column file.  There will be more reshuffling.
+	(find-column-schema): Made it into a generic-function
+
+	* init/numeric-table-package-def.lisp: numeric-table is now an
+	antik-user package
+
+	* column-major-table/interpolated-column.lisp (): New file for
+	columns holding foreign vectors, and facilities for interpolating
+	them
+
 2012-11-07  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/column-major-table-classes.lisp

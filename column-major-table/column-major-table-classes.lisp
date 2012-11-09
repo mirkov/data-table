@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-11-07 21:27:53Eastern Standard Time column-major-table-classes.lisp>
+;; Time-stamp: <2012-11-08 21:56:56Eastern Standard Time column-major-table-classes.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License

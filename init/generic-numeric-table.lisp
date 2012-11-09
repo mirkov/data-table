@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-11-07 21:58:56Eastern Standard Time generic-numeric-table.lisp>
+;; Time-stamp: <2012-11-08 22:14:25Eastern Standard Time generic-numeric-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -56,7 +56,8 @@ TABLE-SCHEMA Optionally specify BUILD-METHOD, DATA-SOURCE, DATA-AUTHOR
 Methods may add additional keys"))
 
 (defgeneric table-column (name table)
-  (:documentation "Return the COLUMN from TABLE using column NAME"))
+  (:documentation "Return the column data (not the column schema) from
+  TABLE using column NAME"))
 
 (defgeneric nth-column (n table)
   (:documentation "Return the N-th column of TABLE"))
@@ -158,14 +159,6 @@ EMPTY-VALUE is the value that signifies an unspecified cell
 		   :equality-predicate #'=
 		   :default-type 'number
 		   :documentation documentation))
-  (:method  (name (type (eql 'foreign-double-float))
-			&key documentation &allow-other-keys)
-    (make-instance 'column-schema
-		   :name name
-		   :comparator #'<
-		   :equality-predicate #'=
-		   :default-type 'number
-		   :documentation documentation))
   (:method (name (type (eql 'symbol)) &key documentation &allow-other-keys)
     (make-instance 'column-schema
 		   :name name
@@ -200,13 +193,6 @@ EMPTY-VALUE is the value that signifies an unspecified cell
 	#'(lambda (value column-schema)
 	    (declare (ignore column-schema))
 	    (assert (typep value default-type))))))
-(defmethod initialize-instance :after ((self (eql 'foreign-double-float)) &key)
-  (with-slots (value-normalizer default-type) self
-  (setf value-normalizer
-	#'(lambda (value column-schema)
-	    (declare (ignore column-schema))
-	    (assert (typep value default-type))
-	    (float value 1d0)))))
 (defmethod initialize-instance :after ((self (eql 'symbol)) &key)
   (with-slots (value-normalizer default-type) self
   (setf value-normalizer
@@ -230,13 +216,6 @@ EMPTY-VALUE is the value that signifies an unspecified cell
   "Normalize VALUE according to specifications in COLUMN-SCHEMA"
   (funcall (value-normalizer column-schema) value column-schema))
 
-(defun find-column-schema (column-name table-schema)
-  "Return column-schema whose column-name matches the one in
-table-schema"
-  (or (find column-name table-schema :key #'name)
-      (error "No column: ~a in schema: ~a"
-	     column-name table-schema)))
-
 (defgeneric column-names (table/table-schema)
   (:documentation "Return list of column names from table or table schema")
   (:method ((table-schema cons))
@@ -250,6 +229,16 @@ COLUMN-NAME is the name of the column")
   (:method ((column-name symbol) (schema cons))
     (column-documentation% (find-column-schema column-name schema))))
 
+
+(defgeneric find-column-schema (name container)
+  (:documentation "Return COLUMN-SCHEMA by NAME from CONTAINER
+
+NAME is a symbol by which the column is identified in the TABLE-SCHEMA
+CONTAINER can be either a table, or a table-schema")
+  (:method ((name symbol) (container numeric-table))
+    (find name (table-schema container) :key #'name))
+  (:method ((name symbol) (container cons))
+    (find name container :key #'name)))
 
 (defun extract-column-schema (column-names table-schema)
   (loop for c in column-names

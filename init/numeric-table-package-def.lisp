@@ -41,8 +41,4 @@ The tables can be of two types:
 The table type depends primarily on the primarily mode of access
 Also the internal data storage is determined by table type"))
 
-
-(in-package #:numeric-table)
-
-;;; "numeric-table" goes here. Hacks and glory await!
-
+(antik:make-user-package "numeric-table")
