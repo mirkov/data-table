@@ -1,3 +1,11 @@
+2012-11-09  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/table-queries.lisp (): Added major
+	functionality to select a table sub-set.  Still not fully
+	operational
+
+	* init/utilities.lisp (make-vv-array): New function
+
 2012-11-08  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* init/generic-numeric-table.lisp: Moved foreign-doble-float to
