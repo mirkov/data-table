@@ -2,6 +2,9 @@
 
 * Aim
 
+  Collection of tabular data structures for use in statistics and data
+  analysis.  The data can be queried, or fitted and interpolated.
+
   Replicate and expand functionality provided by Chapter 27 of
   "Practical Common Lisp" for a data-structure more oriented towards
   numerical data.

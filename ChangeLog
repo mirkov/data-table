@@ -1,3 +1,18 @@
+2012-11-10  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/table-queries.lisp (restrict-rows): Modified
+	the interface for the WHERE function.  It is now a function of one
+	argument, the row index.  The table is stored as a closure.
+
+	* column-major-table/matching-functions.lisp (column-matcher):
+	Using vvref instead of nested aref
+
+	* column-major-table/table-queries.lisp (select): Redefined into a
+	method
+
+	* init/generic-numeric-table.lisp (select): Made `select' into a
+	generic function.
+
 2012-11-09  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/table-queries.lisp (): Added major

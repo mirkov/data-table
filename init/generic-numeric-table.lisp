@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-11-08 22:14:25Eastern Standard Time generic-numeric-table.lisp>
+;; Time-stamp: <2012-11-10 14:54:40Eastern Standard Time generic-numeric-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -250,6 +250,24 @@ TABLE is the table containing the original rows
 
 Particular methods can take considerable latitutude in how they will
 implement this method.  Read their documentation"))
+
+
+(defgeneric select (table &key columns where distinct order-by)
+  (:documentation
+"Return from TABLE rows that match criteria specified by the WHERE function
+Return only columns with names listed in COLUMNS.
+
+If COLUMNS is T, return all columns
+If WHERE is NIL, return all rows
+
+The returned table can be sorted columns listed in ORDER-BY
+If DISTINCT is T, eliminate duplicate rows from results
+
+Methods specializing on different table types need not implement all
+of the selection criterial.  Consult the documentation for each
+method.
+"))
+
 
 (defgeneric value (table &key where column-name &allow-other-keys)
   (:documentation 

@@ -10,7 +10,8 @@
   :depends-on ("lisp-unit"
 	       "alexandria"
 	       "anaphora"
-	       "antik")
+	       "antik"
+	       "gsll")
   :components
   ((:module "init"
 	    :serial t
@@ -25,9 +26,9 @@
 	     (:file "column-major-table-classes")
 	     (:file "table-building")
 	     (:file "table-queries")
-	     #|(:file "matching-functions")
-	     (:file "data-access")|#
-	     (:file "interpolated-data"))
+	     (:file "matching-functions")
+	     #|(:file "data-access")|#
+	     (:file "interpolated-column"))
 	    )
    #+2d-table-implemented
    (:module "2d-table"

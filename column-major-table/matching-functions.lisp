@@ -10,10 +10,8 @@ function is used to search for a value in a specific column
 - VALUE -- value that we are trying to match.  It is normalized prior
 to matching
 
-- TABLE -- the table where we are looking for a match
-
-Based on PCL p. 395"
-;;  (declare (ignore type))
+- TABLE -- the table where we are looking for a match"
+;;Based on PCL p. 395"
   (let* ((n-column (i-column column-schema))
 	 (predicate (equality-predicate column-schema))
 	 (normalized (normalize-for-column value column-schema)))
@@ -21,16 +19,16 @@ Based on PCL p. 395"
 	    "Column index:~a is nil" n-column)
     #'(lambda (N-row)
 	(funcall predicate
-		 (aref (aref (table table) n-column)
-		       N-row)
+		 (vvref (table table) N-row n-column)
 		 normalized))))
 
 (define-test column-schema-matcher
-  (let* ((schema (table-schema *test-table*))
-	 (column-schema (find-column-schema 'delta schema))
-	 (fun (column-matcher column-schema 3 *test-table*)))
-    (assert-true (funcall fun 0))
-    (assert-true (not (funcall fun 1)))))
+  (let* ((table (loaded-test-table))
+	 (schema (table-schema table))
+	 (column-schema (find-column-schema 'sepal-length schema))
+	 (fun (column-matcher column-schema 4.7 table)))
+    (assert-true (funcall fun 1))
+    (assert-true (not (funcall fun 2)))))
 
 (defmethod column-matchers (table names-and-values)
   "Build a list of column matcher functions for TABLE
@@ -51,7 +49,7 @@ An example of a call:
 
 (defun matching-rows (table &rest names-and-values-pairs)
   "Build a WHERE function of index I that returns true when TABLE row
-I matches the NAMES-AND-VALUES
+I matches the NAMES-AND-VALUES.
 
 NAMES-AND-VALUES-PAIR is a pair of COLUMN-NAME and VALUE.  COLUMN-NAME
 corresponds to a column schema name, and value to a value stored in a
@@ -68,9 +66,12 @@ PCL p. 395"
 	       matchers))))
 
 (define-test matching-rows
-  (let ((mf (matching-rows *test-table* '(delta 3) '(lambda-pp 4))))
-    (assert-true (funcall mf 0))
-    (assert-true (not (funcall mf 1)))))
+  "We test for rows that match sepal length of 5.4 and petal width of 0.4
+
+Rows 4 and 9 have match sepal length, but only row 4 matches petal width"
+  (let ((mf (matching-rows (loaded-test-table) '(sepal-length 5.4) '(petal-width 0.4))))
+    (assert-true (funcall mf 4))
+    (assert-true (not (funcall mf 9)))))
 
 
 (defmethod value ((table column-major-table) &key where column-name)
@@ -96,8 +97,9 @@ The function returns nil if no value matches the WHERE and COLUMN-NAME"
   
 
 (define-test value
-  (let ((mf (matching-rows *test-table* '(delta 3) '(lambda-pp 4))))
-    (assert-number-equal 3 (value *test-table* :where mf :column-name 'delta))
-    (assert-number-equal 4 (value *test-table* :where mf :column-name 'lambda-pp)))
-  (let ((mf (matching-rows *test-table* '(delta 12))))
-    (assert-true (not (value *test-table* :where mf :column-name 'delta)))))
+  (let ((table (loaded-test-table)))
+    (let ((mf (matching-rows  table '(sepal-length 5.4) '(petal-width 0.4))))
+      (assert-number-equal 3.9 (value table :where mf :column-name 'sepal-width))
+      (assert-number-equal 1.7 (value table :where mf :column-name 'petal-length)))
+    (let ((mf (matching-rows  table '(sepal-length 5.4) '(petal-width 99))))
+      (assert-true (not (value table :where mf :column-name 'sepal-width))))))
