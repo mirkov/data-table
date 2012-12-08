@@ -2,31 +2,53 @@
 
 * Aim
 
-  Collection of tabular data structures for use in statistics and data
-  analysis.  The data can be queried, or fitted and interpolated.
+  Collection of tabular data structures for use in statistics and
+  numerical data analysis.  The structure supports table queries and
+  selections.  In addition, numerical analysis (such as fitting,
+  interpolation) can be performed on columns, rows or regions.
 
-  Replicate and expand functionality provided by Chapter 27 of
-  "Practical Common Lisp" for a data-structure more oriented towards
-  numerical data.
 
-  
+  The query and selection functionality replicates and expand
+  functionality provided by Chapter 27 of "Practical Common Lisp".
+  The difference between this code and PCL's code is that our code is
+  more geared towards numerical data, while PCL is more data-base like.
+  type of app.
 
-* COLUMN-MAJOR-TABLE
+* Supported data formats
 
-  Stores data that is organized by columns, each column having a name
-  and storing values of a one type.
+  Currently there is only one supported format: [[*COLUMN-MAJOR-TABLE][COLUMN-MAJOR-TABLE]]
+
+
+** COLUMN-MAJOR-TABLE
+
+   Stores data that is organized by columns, each column having a name
+   and storing values of a one type.  The data in columns can be
+   stored as foreign arrays and used in numerical analysis via GSLL.
+
+* Documentation
+
+  Documentation is maintained for users and separately for
+  developers/maintainers.  The documentation sources are in the ~doc~
+  directory.  The html files are in the ~documentation~ directory.
+  The documentation is not yet complete.
 
 * Architecture
 
-  I see this library supporting several types of internal data
-  formats.  They will be unified by a uniform interface (as much as
-  possible).  To that end, there is a section of the library that
-  deals with base class and generic function definitions.
+  I see this library supporting several types of table formats.  They
+  will be unified by a uniform interface (as much as possible).  To
+  that end, there is a section of the library that deals with base
+  class and generic function definitions.
 
   These are then specialized for various table types.
 
-  Currently, I support only one table type, ~column-major-table~.
-  The data is stored as nested vectors.  Top level vector holds the
-  columns.  Each column is stored in a vector.
+  Currently, I support only one table type, ~column-major-table~.  The
+  data is stored as nested vectors.  Top level vector holds the
+  columns.  Each column is stored in a vector.  The vectors can be
+  either native CL or ~grid~'s foreign-array.
+
+* Note
+
+  This library may become part of the data-frame capability of the
+  [[https://groups.google.com/forum/?hl%3Den&fromgroups#!forum/lisp-stat][Common Lisp Statistics]] library.
 
   

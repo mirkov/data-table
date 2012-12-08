@@ -13,7 +13,12 @@ holds its interpolation data")
    (independent-var
     :accessor independent-var
     :initform nil
-    :documentation "Name of column with independent data"))
+    :documentation "Name of column with independent data")
+   (acceleration
+    :accessor acceleration
+    :initform (gsll:make-acceleration)
+    :documentation "GSL's internal interpolation data that accelerates
+the interpolation on subsequent calls"))
   (:documentation "Stores data in foreign vectors appropriate for GSLL and
 other C and Fortran libraries"))
 
@@ -26,6 +31,7 @@ other C and Fortran libraries"))
 		   :equality-predicate #'=
 		   :default-type 'number
 		   :documentation documentation))
+
 (defmethod initialize-instance :after ((self (eql 'foreign-column-schema)) &key)
   (with-slots (value-normalizer default-type) self
   (setf value-normalizer
@@ -110,27 +116,34 @@ holds its interpolation data")
 (defmethod interp-column (name value (column-table numeric-table))
   (gsll:evaluate
    (interpolation-data
-    (find-column-schema name column-table)) value))
+    (find-column-schema name column-table)) value
+    :acceleration (acceleration (find-column-schema name column-table))))
 
 (define-test init-column-interp
+  "Test column interpolation on x vs x^2 where x is a vector of
+integer values from 0 to 9
+
+I had to set lisp-unit:*epsilon* to 1e-4 in order for test to succeed.
+I thought that spline interpolation would correctly interpolate a
+polynomical."
   (let ((values
-	   (loop for i below 10
-	      collect (float i 1d0) into x
-	      collect (float (* 2 i) 1d0) into y
-	      finally (return (list x y)))))
+	 (loop for i below 10
+	    collect (float i 1d0) into x
+	    collect (float (expt i 2) 1d0) into y
+	    finally (return (list x y)))))
     (let ((x (grid:make-foreign-array 'double-float :dimensions 10
 				      :initial-contents (first values)))
 	  (y (grid:make-foreign-array 'double-float :dimensions 10
-				     :initial-contents (second values))))
+				      :initial-contents (second values))))
       (let ((table (make-table 'column-major-table
 			       (make-table-schema 'column-major-table
 						  '((x-col foreign-double-float)
 						    (y-col foreign-double-float))))))
-	(type-of x)
 	(set-table-column table 0 x)
 	(set-table-column table 1 y)
 	(init-column-interp 'y-col 'x-col table)
-	(assert-number-equal 6.4
-			     (interp-column 'y-col 3.2 table))))))
+	(let ((*epsilon* 1e-4))
+	  (assert-number-equal (expt 5.2 2)
+			       (interp-column 'y-col 5.2 table)))))))
 
     

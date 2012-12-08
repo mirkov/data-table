@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-11-10 14:54:40Eastern Standard Time generic-numeric-table.lisp>
+;; Time-stamp: <2012-11-22 10:13:07Eastern Standard Time generic-numeric-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -51,7 +51,8 @@ This can be a journal reference or something else"))
 			     data-source data-author
 			     &allow-other-keys)
   (:documentation "Make a table of given TYPE and specify the
-TABLE-SCHEMA Optionally specify BUILD-METHOD, DATA-SOURCE, DATA-AUTHOR
+TABLE-SCHEMA.  Optionally specify BUILD-METHOD, DATA-SOURCE,
+DATA-AUTHOR.
 
 Methods may add additional keys"))
 
