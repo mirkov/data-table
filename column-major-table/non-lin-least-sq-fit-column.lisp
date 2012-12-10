@@ -139,6 +139,7 @@ function to fill F and JACOBIAN"
 
 (defparameter *b* 1.5d0)
 (defparameter *a* 1.1d0)
+
 (defun y (x coeffs)
   (let ((a (grid:aref coeffs 0))
 	(b (grid:aref coeffs 1)))
@@ -234,8 +235,9 @@ function to fill F and JACOBIAN"
     (macrolet ((fitx (i) `(grid:aref (gsll:solution fit) ,i))
 	       (err (i) `(sqrt (grid:aref covariance ,i ,i))))
       (when print-steps
-	(format t "iter: ~d x = ~15,8f ~15,8f |f(x)|=~7,6g~&"
-		0 (fitx 0) (fitx 1) 
+	(format t "iter: ~d x = ~{~15,8f ~} |f(x)|=~7,6g~&"
+		0 (loop for i below n-coeffs
+		       collect (fitx i))
 		(norm-f fit)))
       (loop for iter from 0 below max-steps
 	 until
@@ -245,8 +247,9 @@ function to fill F and JACOBIAN"
 	   (gsll:iterate fit)
 	   (setf covariance (gsll:ls-covariance fit 0.0d0 covariance))
 	   (when print-steps
-	     (format t "iter: ~d x = ~15,8f ~15,8f |f(x)|=~7,6g~&"
-		     (1+ iter) (fitx 0) (fitx 1)
+	     (format t "iter: ~d x = ~{~15,8f ~} |f(x)|=~7,6g~&"
+		     (1+ iter) (loop for i below n-coeffs
+				  collect (fitx i))
 		     (norm-f fit)))
 	 finally
 	   (let* ((chi (norm-f fit))
@@ -254,9 +257,10 @@ function to fill F and JACOBIAN"
 		  (c (max 1.0d0 (/ chi (sqrt dof)))))
 	     (when print-steps
 	       (format t "chisq/dof = ~g~&" (/ (expt chi 2) dof))
-	       (format t "A         = ~,5f +/- ~,5f~&" (fitx 0) (* c (err 0)))
-	       (format t "b         = ~,5f +/- ~,5f~&" (fitx 1) (* c (err 1))))
-	     (return (list (fitx 0) (fitx 1))))))))
+	       (dotimes (i n-coeffs)
+		 (format t "c_~g         = ~,5f +/- ~,5f~&" i (fitx i) (* c (err i)))))
+	     (return (loop for i below n-coeffs
+			collect (fitx i))))))))
 
 
 (define-test init-column-fit
@@ -273,8 +277,45 @@ function to fill F and JACOBIAN"
       (assert-numerical-equal '(1.1 1.5)
 			    (fit-column table 'y-col
 					(grid:make-grid '((grid:foreign-array 2) double-float)
-							:initial-contents (list 2d0 1d0)))))
-  ))
+							:initial-contents (list 2d0 1d0)))))))
+
+
+(defun exp-y (x coeffs)
+  (let ((a (grid:aref coeffs 0))
+	(lambda (grid:aref coeffs 1))
+	(b (grid:aref coeffs 2)))
+    (+ (* A (exp (* (- lambda) x))) b)))
+
+(defun exp-dy/d-coeffs (x coeffs)
+  (let* ((a (grid:aref coeffs 0))
+	 (lambda (grid:aref coeffs 1))
+	 (e (exp (- (* lambda x)))))
+    (mapcar #'-
+	    (list e
+		  (* -1 x a e)
+		  1d0))))
+
+
+(define-test gsl-fit
+  ""
+  (let ((table (make-table 'column-major-table
+			   (make-table-schema 'column-major-table
+					      '((x-col foreign-double-float)
+						(y-col non-lin-ls-sq-column-schema)))))
+	(data (gsll::generate-nlls-data)))
+    (set-table-column table 0 
+		      (grid:make-grid '((grid:foreign-array 40) double-float)
+				      :initial-contents
+				      (loop for i below 40
+					   collect i)))
+    (set-table-column table 1 (gsll::exponent-fit-data-y data))
+    (init-column-fit 'y-col 'x-col table
+		     #'exp-y #'exp-dy/d-coeffs 3)
+    (let ((lisp-unit:*epsilon* 1e-1))
+      (assert-numerical-equal '(5 0.1 1)
+			    (fit-column table 'y-col
+					(grid:make-grid '((grid:foreign-array 3) double-float)
+							:initial-contents (list 2 1 1)))))))
 
 (defun |sigma| (c n)
   (/ (- 1 (expt c (+ 1 n)))
