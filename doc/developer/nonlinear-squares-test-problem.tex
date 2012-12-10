@@ -1,0 +1,200 @@
+
+\documentclass{article}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amsfonts}
+\usepackage{amsmath}
+
+\setcounter{MaxMatrixCols}{10}
+%TCIDATA{OutputFilter=LATEX.DLL}
+%TCIDATA{Version=5.50.0.2960}
+%TCIDATA{<META NAME="SaveForMode" CONTENT="1">}
+%TCIDATA{BibliographyScheme=Manual}
+%TCIDATA{Created=Sunday, December 09, 2012 07:04:33}
+%TCIDATA{LastRevised=Sunday, December 09, 2012 16:52:46}
+%TCIDATA{<META NAME="GraphicsSave" CONTENT="32">}
+%TCIDATA{<META NAME="DocumentShell" CONTENT="Standard LaTeX\Standard LaTeX Article">}
+%TCIDATA{CSTFile=40 LaTeX article.cst}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{acknowledgement}[theorem]{Acknowledgement}
+\newtheorem{algorithm}[theorem]{Algorithm}
+\newtheorem{axiom}[theorem]{Axiom}
+\newtheorem{case}[theorem]{Case}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{conclusion}[theorem]{Conclusion}
+\newtheorem{condition}[theorem]{Condition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{criterion}[theorem]{Criterion}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{exercise}[theorem]{Exercise}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{problem}[theorem]{Problem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{solution}[theorem]{Solution}
+\newtheorem{summary}[theorem]{Summary}
+\newenvironment{proof}[1][Proof]{\noindent\textbf{#1.} }{\ \rule{0.5em}{0.5em}}
+\input{tcilatex}
+
+\begin{document}
+
+\title{Standard 
+%TCIMACRO{\TeXButton{LaTeX}{\LaTeX{}} }%
+%BeginExpansion
+\LaTeX{}
+%EndExpansion
+Article}
+\author{A. U. Thor \\
+%EndAName
+The University of Stewart Island}
+\maketitle
+
+\begin{abstract}
+We study the effects of warm water on the local penguin population. The
+major finding is that it is extremely difficult to induce penguins to drink
+warm water. The success factor is approximately $-e^{-i\pi }-1$.
+\end{abstract}
+
+\section{Nonlinear least square fitting}
+
+I define a test function and data for which I can obtain the residual, its
+square, and its partial derivatives in closed form.
+
+\subsection{Example data and test function}
+
+For the data I consider the exact function 
+\begin{equation}
+y_{i}=ae^{-bi}  \label{def:y_i}
+\end{equation}%
+with 
+\begin{equation}
+i=0,1,\ldots ,9  \label{def:i:0-9}
+\end{equation}%
+modeled by the two parameter curve%
+\begin{equation}
+y=Ae^{-Bi}  \label{def:y(i)}
+\end{equation}
+
+\subsection{Residual and its derivative}
+
+The residual is%
+\begin{eqnarray}
+r_{i} &=&y_{i}-y\left( i\right)  \\
+&=&ae^{-bi}-Ae^{-Bi}  \label{eq:r_i^2}
+\end{eqnarray}%
+Its residual with respect to $A$ and $B$ is calculated next. For $A$,%
+\begin{eqnarray}
+\frac{\partial r_{i}}{\partial A} &=&-\frac{\partial y}{\partial A} \\
+&=&-e^{-Bi}
+\end{eqnarray}%
+and for $B$%
+\begin{eqnarray}
+\frac{\partial r_{i}}{\partial B} &=&-\frac{\partial y}{\partial B} \\
+&=&Aie^{-Bi}
+\end{eqnarray}
+
+The residual squared is%
+\begin{eqnarray}
+r_{i}^{2} &=&\left( ae^{-bi}-Ae^{-Bi}\right) ^{2} \\
+&=&a^{2}e^{-2bi}-2aAe^{-\left( b+B\right) i}+A^{2}e^{-2Bi}
+\end{eqnarray}%
+which is written as%
+\begin{equation}
+r_{i}^{2}=a^{2}\left( e^{-2b}\right) ^{i}-2aA\left( e^{-\left( b+B\right)
+}\right) ^{i}+A^{2}\left( e^{-2B}\right) ^{i}
+\end{equation}
+
+Introducint%
+\begin{eqnarray}
+\alpha  &=&e^{-2b}  \label{def:alpha} \\
+\beta  &=&e^{-\left( b+B\right) }  \label{def:beta} \\
+\gamma  &=&e^{-2B}  \label{def:gamma}
+\end{eqnarray}%
+the residual squared is%
+\begin{equation}
+r_{i}^{2}=a^{2}\alpha ^{i}-2aA\beta ^{i}+A^{2}\gamma ^{i}
+\label{eq:r_i^2(alpha,beta,gamma)}
+\end{equation}%
+and their sum is%
+\begin{eqnarray}
+S &=&\sum r_{i}^{2} \\
+&=&a^{2}\sum \alpha ^{i}-2aA\sum \beta ^{i}+A^{2}\sum \gamma ^{i}
+\label{eq:S}
+\end{eqnarray}
+
+\subsection{Summation function}
+
+I will be using the summation identity%
+\begin{eqnarray}
+\sum_{i=0}^{n}c^{i} &=&\frac{1-c^{n+1}}{1-c} \\
+&=&\sigma _{n}\left( c\right)   \label{def:sigma-fun}
+\end{eqnarray}%
+and its derivativeThe derivative of $\sigma $ is%
+\begin{eqnarray}
+\frac{d\sigma }{dc} &=&\frac{d}{dc}\left( \frac{1-c^{n+1}}{1-c}\right)  \\
+&=&\frac{\left( 1-c\right) \left( -\left( n+1\right) c^{n}\right) -\left(
+1-c^{n+1}\right) \left( -1\right) }{1-c^{2}} \\
+&=&\frac{cc^{n}n-c^{n}-c^{n}n+1}{1-c^{2}} \\
+&=&\frac{nc^{n+1}-\left( n+1\right) c^{n}+1}{1-c^{2}} \\
+&=&\frac{c^{n}\left( n\left( c-1\right) -1\right) +1}{1-c^{2}}
+\label{eq:sigma'}
+\end{eqnarray}
+
+Using $\sigma $, the sum of residual squared is%
+\begin{equation}
+S=a^{2}\sigma _{n}\left( \alpha \right) -2aA\sigma \left( \beta \right)
++A^{2}\sigma \left( \gamma \right)   \label{eq:S(sigma,alpha,beta,gamma)}
+\end{equation}
+
+\subsection{Partial derivatives of $S$}
+
+I\ now derive the partial derivatives of $S$. I make sure that at match%
+\begin{eqnarray}
+A &=&a  \label{def:match} \\
+B &=&b
+\end{eqnarray}%
+the partial derivative is zero.
+
+The derivative of $S$ with respect to $A$ is%
+\begin{equation}
+\frac{\partial S}{\partial A}=-2a\sigma \left( \beta \right) +2A\sigma
+\left( \gamma \right) 
+\end{equation}%
+At match, this becomes%
+\begin{eqnarray}
+\frac{\partial S}{\partial A} &=&a\sigma \left( \beta \right) +2a\sigma
+\left( \beta \right)  \\
+&=&0
+\end{eqnarray}
+
+The derivative of $S$ with respect to $B$ is%
+\begin{equation}
+\frac{\partial S}{\partial B}=-2aA\frac{d\sigma \left( \beta \right) }{%
+d\beta }\frac{\partial \beta }{\partial B}+A^{2}\frac{d\sigma \left( \gamma
+\right) }{d\gamma }\frac{\partial \gamma }{\partial B}
+\end{equation}
+
+The derivatives of $\beta $ and $\gamma $ are%
+\begin{eqnarray}
+\frac{\partial \beta }{\partial B} &=&-\beta  \\
+&=&-\gamma  \\
+\frac{\partial \gamma }{\partial B} &=&-2\gamma 
+\end{eqnarray}%
+The partial derivative is%
+\begin{equation}
+\frac{\partial S}{\partial B}=2aA\gamma \frac{d\sigma \left( \beta \right) }{%
+d\beta }-2A^{2}\gamma \frac{d\sigma \left( \gamma \right) }{d\gamma }
+\end{equation}
+
+At match this becomes%
+\begin{eqnarray}
+\frac{\partial S}{\partial A} &=&2a^{2}\gamma \frac{d\sigma \left( \beta
+\right) }{d\beta }-2a^{2}\gamma \frac{d\sigma \left( \beta \right) }{d\beta }
+\\
+&=&0
+\end{eqnarray}
+
+\end{document}

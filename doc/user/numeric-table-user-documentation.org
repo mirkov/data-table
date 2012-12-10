@@ -1,0 +1,203 @@
+#+title: Numeric table -- user documentation
+
+This is the top node for user documentation.  Separate documentation
+for developers details the internals of the code.  Documentation for
+maintainers includes instructions for generating html files.
+
+
+
+* Table structure
+
+  The table is defined by its schema (we refer to it as table-schema).
+  For a column table, the schema specifies each column's type, name,
+  and other properties.  The properties for each column are called
+  column-schema.
+
+  
+
+* Column-major-table
+
+  Column major table stores data in a set of vectors.  The data in the
+  columns can be compared, sorted, extracted.  Numerical operations
+  via GSLL may be performed (this capability is rudimentary at this
+  point.  The code is still evolving for this capability).
+
+  Each column-schema contains the following data
+  - name :: a symbol
+  - equality-predicate :: a function
+  - comparator :: a function
+  - value-normalizer :: a function
+  - default-value :: some value
+  - default-type :: a symbol
+  - i-column :: column's index in the table (this is may be an
+                internal property)
+  - documentation :: User friendly documentation for the data in the column
+  - empty-value :: value that stands for empty value
+
+
+** Creating a table
+
+   Tables are created in two stages:
+   - Define a table and create a table instance
+   - Load the table with data
+   
+** Operating on a table
+   We support the following operations
+   - ...
+
+** Numerical operations on a table column 
+   We support only the following operation for now:
+   - 
+
+* Dictionary
+
+  
+
+** make-table
+*** Syntax:
+    
+    *make-table* type table-schema &key build-method data-source
+    data-author &other-keys
+
+*** Arguments and Values:
+
+    - symbol :: a symbol naming the table type
+    - table-schema :: a list of name column-type pairs.  Both of them
+                      are symbols
+    - build-method :: a symbol specifying how the table will be assembled
+    - data-source :: a symbol, string, path pointing to the data's origin
+    - data-author :: a string, specifying the author of the data
+
+*** Description
+
+    *make-table* returns an instance of an empty table.
+    
+
+** make-table-schema
+
+*** Syntax
+    *make-table-schema* type spec
+
+*** Arguments and Values
+    - type :: a symbol.  Only allowed value is 'column-major-table
+    - spec :: A list of name type pairs (both of them symbols)
+      
+*** Description
+    Returns an instance of a table schema.  The names listed in
+    /spec/ should be unique.
+
+** make-column-schema
+
+*** Syntax
+    *make-column-schema* name type &key comparator equality-predicate
+    default-type documentation empty-value &allow-other-keys
+
+*** Arguments and Values
+    - name :: a symbol, used to identify the column
+    - type :: a symbol, specifying the type of data in the column
+    - equality-predicate :: a function
+    - comparator :: a function
+    - default-type :: a symbol, one of allowed CL data types
+
+*** Description
+
+
+** table-column
+
+*** Syntax:
+
+    *table-column* name table
+
+*** Arguments and Values
+    - name :: a symbol or integer used to identify a column
+    - table :: an instance of a table
+
+*** Description
+    Return the values of the column.  This is some type of vector.
+
+    This function is /setf/-able.  See [[*set-table-column][set-table-column]].
+
+** nth-column
+
+*** Syntax
+    *nth-column* n table
+
+*** Arguments and Values
+    - n :: an integer
+    - table :: an instance of a table
+
+*** Description
+    Return the values stored in table's nth-column.  This is an
+    internal function.  Users should use [[*table-column][table-column]].
+
+** set-table-column
+
+*** Syntax
+    *set-table-column* column-id table column-vector &key overwrite &allow-other-keys
+
+*** Arguments and Values
+    - column-id :: a symbol or integer used to identify the column
+    - table :: an instance of a table
+    - column-vector :: Vector containing the data
+    - overwrite :: Generalized boolean.  If T, existing data can be
+                   overwritten.  Otherwise signal error
+
+*** Description
+    *set-table-column* is used to build or modify a table contents.
+    The table is initialized as empty.  We then
+    use *set-table-column* to add data to it.  We can also modify the
+    data, but have to set the /overwrite/ keyword to T.
+
+    This command 
+    
+** insert-row
+
+*** Syntax
+    *insert-row* row table
+
+*** Arguments and Values
+    - row :: List or vectors of values to be added to the table
+    - table :: Instance of a table
+
+
+*** Description
+
+    *insert-tow* is used to add values to a table.  Recall that the
+    table is instantiated empty, and the data has to be added to it.
+
+** nth-row
+
+*** Syntax
+
+    *nth-row* n table
+
+*** Arguments and Values
+    - n :: integer
+    - table :: table instance
+
+*** Description
+    Return a vector of values from the table's n-th row
+
+** table-size
+
+*** Syntax
+    *table-size* table
+
+*** Arguments and Values
+    - table :: an instance of a tabl
+
+*** Description
+    Return table's size.  The returned value depends on the table
+    type:
+    - column-major-table :: A list with  row-count and table-count
+
+    
+
+* Templates
+** Command
+
+*** Syntax
+
+*** Arguments and Values
+
+*** Description

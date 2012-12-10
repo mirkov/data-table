@@ -20,6 +20,13 @@
 	  n column-count)
   (aref table n)))
 
+(defmacro with-bare-test-table (&body body)
+  `(let ((test-table
+	 (make-table 'column-major-table
+		     (make-table-schema 'column-major-table
+				  '((delta number) (lambda-pp number))))))
+     ,@body))
+
 (define-test table-column
   (with-bare-test-table
     (insert-row '(3 4) test-table)

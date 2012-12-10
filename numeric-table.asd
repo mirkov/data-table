@@ -27,8 +27,10 @@
 	     (:file "table-building")
 	     (:file "table-queries")
 	     (:file "matching-functions")
-	     #|(:file "data-access")|#
-	     (:file "interpolated-column"))
+	     (:file "data-access")
+	     (:file "foreign-column")
+	     (:file "interpolated-column")
+	     (:file "non-lin-least-sq-fit-column"))
 	    )
    #+2d-table-implemented
    (:module "2d-table"

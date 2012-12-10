@@ -1,3 +1,17 @@
+2012-12-09  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/interpolated-column.lisp (interpolated-column-schema): New class, derived from foreign-column
+	(make-column-schema): Function for creating instances of schemas for interpolated columns
+	(init-column-interp): Adapted to new class
+	(init-column-interp): Adapted test to new class creation
+
+	* column-major-table/foreign-column.lisp (:numeric-table):
+	Refactored interpolated-column into foreign-column.  This will
+	enable addition of non-lin-ls-sq-fit-column
+
+	* numeric-table.asd (#:numeric-table): Added
+	column-major-table/data-access.lisp to asdf system
+
 2012-12-08  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* init/generic-numeric-table.lisp (make-table): Typo fix.
