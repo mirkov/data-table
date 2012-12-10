@@ -1,5 +1,14 @@
 2012-12-09  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
+	* column-major-table/non-lin-least-sq-fit-column.lisp
+	(non-lin-ls-sq-column-schema): Updated documentation and removed
+	dead code.
+	(non-lin-ls-sq-column-schema): Added sigma slot
+	(make-column-schema): Added documentation stub
+	(init-column-fit): Added extensive documentation
+	(init-column-fit): Added sigma argument and code.  Not
+	exhaustively tested.  But the current unit-tests are passing. 
+
 	* column-major-table/interpolated-column.lisp (interpolated-column-schema): New class, derived from foreign-column
 	(make-column-schema): Function for creating instances of schemas for interpolated columns
 	(init-column-interp): Adapted to new class
