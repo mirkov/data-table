@@ -22,6 +22,9 @@
 	(numeric-table): Removed accessor to table data from `table'.
 	Table data is really a private property, and its format may change
 	in future versions of the software
+	(column-schema): Removed reader method to `documentation' slot
+	(column-documentation): Instead of using obsolete `column-doc%',
+	accessing slot value directly.
 
 	* init/utilities.lisp (mklist): Added documentation
 	(init-vv-array): Renamed make-vv-array into init-vv-array

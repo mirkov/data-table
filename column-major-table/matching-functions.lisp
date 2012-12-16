@@ -14,14 +14,14 @@ to matching
 
 - TABLE -- the table where we are looking for a match"
 ;;Based on PCL p. 395
-  (let* ((n-column (i-column column-schema))
-	 (predicate (equality-predicate column-schema))
-	 (normalized (normalize-for-column value column-schema)))
+  (let* ((n-column (slot-value column-schema 'i-column))
+	 (predicate (slot-value column-schema 'equality-predicate))
+	 (normalized (normalize-value value column-schema)))
     (assert n-column ()
 	    "Column index:~a is nil" n-column)
     #'(lambda (N-row)
 	(funcall predicate
-		 (vvref (table table) N-row n-column)
+		 (vvref (table-data table) N-row n-column)
 		 normalized))))
 
 (define-test column-schema-matcher
@@ -87,7 +87,7 @@ Rows 4 and 9 have match sepal length, but only row 4 matches petal width"
 The WHERE function is used to find the first matching instance.  
 
 The function returns nil if no value matches the WHERE and COLUMN-NAME"
-  (let* ((data (table table))
+  (let* ((data (table-data table))
 	 (schema (table-schema table))
 	 ;; we now select the matching rows
 	 (i-row (loop for i below (row-count table)
@@ -96,7 +96,8 @@ The function returns nil if no value matches the WHERE and COLUMN-NAME"
     (when i-row
       (aref
        (aref data
-	     (i-column (find-column-schema column-name schema)))
+	     (slot-value (find-column-schema column-name schema)
+			 'i-column))
        i-row))))
   
 

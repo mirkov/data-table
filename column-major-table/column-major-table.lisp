@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-11-07 21:29:31Eastern Standard Time column-major-table.lisp>
+;; Time-stamp: <2012-12-15 22:48:13Eastern Standard Time column-major-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -44,9 +44,9 @@ name and column type"
 (define-test make-table-schema
   (let ((schema
 	 (make-table-schema 'column-major-table '((delta number) (lambda-pp number)))))
-    (assert-number-equal 0 (i-column (first schema)))
-    (assert-number-equal 1 (i-column (second schema)))
-    (assert-equal 'delta (name (first schema)))))
+    (assert-number-equal 0 (slot-value (first schema) 'i-column))
+    (assert-number-equal 1 (slot-value (second schema) 'i-column))
+    (assert-equal 'delta (slot-value (first schema) 'name))))
 
 
 (defmethod column-documentation ((column-name symbol)

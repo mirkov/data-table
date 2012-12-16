@@ -72,8 +72,8 @@
 (define-test plant-table-column-matcher
   "Check that column matcher for sepal-length and value 5.4 corresponds to fifth row"
   (assert-true
-   (let* ((schema (schema *plant-table*))
-	  (column (find-column 'sepal-length schema))
+   (let* ((schema (table-schema *plant-table*))
+	  (column (find-column-schema 'sepal-length schema))
 	  (fun (column-matcher column 5.4 *plant-table*)))
      (funcall fun 4))))
 

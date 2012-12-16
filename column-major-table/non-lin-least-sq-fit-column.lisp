@@ -479,7 +479,7 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
 				      (loop for i below 40
 					   collect i)))
     (set-table-column table 1 (gsll::exponent-fit-data-y data))
-    (init-column-fit 'y-col 'x-col table
+    (init-column-fit 'y-col 'x-col 1d0 table
 		     #'exp-y #'exp-dy/d-coeffs 3)
     (let ((lisp-unit:*epsilon* 1e-1))
       (assert-numerical-equal '(5 0.1 1)

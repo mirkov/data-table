@@ -48,10 +48,10 @@ independent variable and the GSL accelerator"))
 	    x-name)
     (setf (interpolation-data y-schema)
 	  (gsll:make-spline gsll:+cubic-spline-interpolation+
-			    (aref (table column-table)
-				  (position x-name table-schema :key #'name))
-			    (aref (table column-table)
-				  (position y-name table-schema :key #'name)))
+			    (aref (table-data column-table)
+				  (position x-name table-schema :key #'column-name))
+			    (aref (table-data column-table)
+				  (position y-name table-schema :key #'column-name)))
 	  (independent-var y-schema) x-name)))
   
 

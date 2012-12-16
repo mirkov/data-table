@@ -1,22 +1,3 @@
-;; Mirko Vukovic
-;; Time-stamp: <2012-11-08 21:56:56Eastern Standard Time column-major-table-classes.lisp>
-;; 
-;; Copyright 2011 Mirko Vukovic
-;; Distributed under the terms of the GNU General Public License
-;; 
-;; This program is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
-;; 
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-;; 
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 (in-package :numeric-table)
 
 ;;; Classes and methods for instantiating column-major tables
@@ -55,8 +36,8 @@ name and column type"
 (define-test make-table-schema
   "Test the structure of table schema"
   (let ((schema (test-table-schema)))
-    (assert-number-equal 0 (i-column (first schema)))
-    (assert-number-equal 1 (i-column (second schema)))
+    (assert-number-equal 0 (slot-value (first schema) 'i-column))
+    (assert-number-equal 1 (slot-value (second schema) 'i-column))
     (assert-number-equal 5 (length schema))))
 
 
@@ -67,9 +48,9 @@ name and column type"
 (define-test column-schema
   "Lightly test the contents of column schema"
   (let ((schema (test-table-schema)))
-    (assert-equal 'sepal-length (name (first schema)))
-    (assert-equal 'number (default-type (first schema)))
-    (assert-equal "column 2" (column-documentation 'petal-length schema))))
+    (assert-equal 'sepal-length (column-name (first schema)) "1")
+    (assert-equal 'number (default-type (first schema)) "2")
+    (assert-equal "column 2" (column-doc (find-column-schema 'petal-length schema)) "3")))
 
 
 (defmethod make-table ((type (eql 'column-major-table)) schema

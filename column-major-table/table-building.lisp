@@ -39,10 +39,10 @@ If the table is bare, initialize it and specify the build method."
        table))
     (assert-equal 3 (row-count table))
     (assert-equal 5 (column-count table))
-    (assert-number-equal 4.9 (vvref (table table) 0 0))
-    (assert-number-equal 3.2 (vvref (table table) 1 1))
-    (assert-number-equal 3.1 (vvref (table table) 2 1))
-    (assert-number-equal 1.3 (vvref (table table) 1 2))))
+    (assert-number-equal 4.9 (vvref (table-data table) 0 0))
+    (assert-number-equal 3.2 (vvref (table-data table) 1 1))
+    (assert-number-equal 3.1 (vvref (table-data table) 2 1))
+    (assert-number-equal 1.3 (vvref (table-data table) 1 2))))
 
 (defmethod set-table-column ((column-table column-major-table)
 			     column-identifier
@@ -76,7 +76,7 @@ or a symbol" (type-of column-identifier))))))
       (setf (aref table column-index)
 	    (let* ((column-schema (nth-column-schema column-index
 						     column-table))
-		   (value-normalizer (value-normalizer column-schema)))
+		   (value-normalizer (slot-value column-schema 'value-normalizer)))
 	      (grid:map-grid :source column-vector
 			     :element-function (lambda (value)
 						 (funcall value-normalizer
@@ -95,10 +95,10 @@ or a symbol" (type-of column-identifier))))))
 			     :collect (aref *flower-data* i-row i-column)))))
     (assert-equal 5 (column-count table))
     (assert-equal 3 (row-count table))
-    (assert-number-equal 4.9 (vvref (table table) 0 0))
-    (assert-number-equal 3.2 (vvref (table table) 1 1))
-    (assert-number-equal 3.1 (vvref (table table) 2 1))
-    (assert-number-equal 1.3 (vvref (table table) 1 2))))
+    (assert-number-equal 4.9 (vvref (table-data table) 0 0))
+    (assert-number-equal 3.2 (vvref (table-data table) 1 1))
+    (assert-number-equal 3.1 (vvref (table-data table) 2 1))
+    (assert-number-equal 1.3 (vvref (table-data table) 1 2))))
 
 
 (defun loaded-test-table ()

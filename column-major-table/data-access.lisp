@@ -45,7 +45,7 @@
   "Return column contents of column matching COLUMN-NAME"
   (nth-column
    (position column-name (table-schema table)
-	     :key #'name)
+	     :key #'column-name)
    table))
 
 (defmethod table-column ((column-index integer)

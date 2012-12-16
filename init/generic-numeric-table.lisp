@@ -3,8 +3,7 @@
 
 (export '(numeric-table
 	  row-count column-count
-	  table-schema
-	  build-method data-source data-author
+	  data-source data-author
 	  make-table table-column set-table-column
 	  nth-column set-nth-column
 	  insert-row nth-row
@@ -17,11 +16,12 @@
 	  column-names column-doc
 	  find-column-schema nth-column-schema
 	  ;;
-	  select value
+	  select value in
 	  ))
 
 (defclass numeric-table ()
   ((table :initarg :table
+	  :reader table-data
 	  :documentation "Table data")
    (row-count :reader row-count
 	      :initform 0
@@ -31,7 +31,8 @@ In case of variable row count return values 'variable and max-row-count")
 		 :documentation "Return number of columns
 In case of a variable column count, return values 'variable and max-column-count"
 		 :initform 0)
-   (table-schema :accessor table-schema :initarg :table-schema
+   (table-schema :accessor table-schema
+		 :initarg :table-schema
 		 :documentation "Stores table meta-data 
 
 - Column names
@@ -106,37 +107,37 @@ size might not be meaningful"))
   (:documentation "Create TABLE-SCHEMA based on SPEC for table TYPE"))
 
 (defclass column-schema ()
-  ((name ;;:reader name
+  ((name :reader column-name
 	 :initarg :name)
-   (equality-predicate ;;:reader equality-predicate
+   (equality-predicate :reader equality-predicate
 		       :initarg :equality-predicate
 		       :initform #'=)
-   (comparator ;;:reader comparator
+   (comparator :reader comparator
 	       :initarg :comparator
 	       :initform #'>)
-   (value-normalizer ;;:reader value-normalizer
+   (value-normalizer :reader value-normalizer
 		     :initarg :value-normalizer
 		     :initform #'(lambda (v column)
 				   (declare (ignore column))
 				   v))
-   (default-value ;;:reader default-value
+   (default-value :reader default-value
      :initarg :default-value
      :initform nil)
-   (default-type ;;:reader default-type
+   (default-type :reader default-type
      :initarg :default-type
      :initform nil
      :documentation "Stored values will be compared against the type")
-   (i-column ;;:reader i-column
+   (i-column :reader i-column
 	     :initarg :i-column
 	     :initform nil
 	     :documentation "Stores the column index")
    (documentation :initarg :documentation
-		  :initform nil
 		  :reader column-doc
+		  :initform nil
 		  :documentation "Text describing the documentation")
    (empty-value :initarg :empty-value
 		:initform nil
-		;;:reader empty-value
+		:reader empty-value
 		:documentation "Value that signifies an empty cell")
    )
   (:documentation "Store the schema for a column"))
@@ -237,10 +238,10 @@ SCHEMA can be a COLUMN-SCHEMA or (when implemented) ROW-SCHEMA")
 (defgeneric column-documentation (column-name table-or-table-schema)
   (:documentation "Return column documentation from TABLE or TABLE-SCHEMA")
   (:method ((column-name symbol) (table-schema cons))
-    (column-doc% (find-column-schema column-name table-schema)))
+    (column-doc (find-column-schema column-name table-schema)))
   (:method ((column-name symbol) (table numeric-table))
-    (column-doc% (find-column-schema column-name 
-				     (table-schema table)))))
+    (column-doc (find-column-schema column-name 
+				    (table-schema table)))))
 
 
 (defgeneric find-column-schema (column-name table-or-table-schema)
@@ -250,9 +251,9 @@ SCHEMA can be a COLUMN-SCHEMA or (when implemented) ROW-SCHEMA")
 NAME is a symbol by which the column is identified in the TABLE-SCHEMA
 CONTAINER can be either a table, or a table-schema")
   (:method ((name symbol) (table numeric-table))
-    (find name (table-schema table) :key #'name))
+    (find name (table-schema table) :key #'column-name))
   (:method ((name symbol) (table-schema cons))
-    (find name table-schema :key #'name)))
+    (find name table-schema :key #'column-name)))
 
 (defgeneric nth-column-schema (n table-or-table-schema)
   (:documentation "Return COLUMN-SCHEMA by position from TABLE or
@@ -273,7 +274,7 @@ COLUMN-NAMES is a list of column names")
     (collect-column-schema column-names (table-schema table)))
   (:method ((column-names cons) (table-schema cons))
     (loop for c in column-names
-       collect (find-column c table-schema))))
+       collect (find-column-schema c table-schema))))
 
 (defgeneric restrict-rows (table where)
   (:documentation "Return a new table whose rows satisfy WHERE.
