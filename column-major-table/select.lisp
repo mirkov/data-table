@@ -1,5 +1,7 @@
 (in-package :numeric-table)
 
+(export '(select))
+
 (defgeneric extractor (table table-schema)
   (:documentation "Return a function of a row index I
 

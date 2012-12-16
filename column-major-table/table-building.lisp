@@ -73,7 +73,14 @@ or a symbol" (type-of column-identifier))))))
       (assert (= (length column-vector) row-count) ()
 	      "The new column length ~a does not match table row count ~a"
 	      (length column-vector) row-count)
-      (setf (aref table column-index) column-vector))))
+      (setf (aref table column-index)
+	    (let* ((column-schema (nth-column-schema column-index
+						     column-table))
+		   (value-normalizer (value-normalizer column-schema)))
+	      (grid:map-grid :source column-vector
+			     :element-function (lambda (value)
+						 (funcall value-normalizer
+							  value column-schema))))))))
 
 
 (define-test set-table-column

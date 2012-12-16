@@ -1,0 +1,14 @@
+#+title: Building documentation
+
+
+* Using ~tinaa~
+
+** Bugfixes
+
+   Converted namestring to pathname in [[file:../../../../../../../quicklisp/dists/quicklisp/software/tinaa-20110418-git/dev/generate-output.lisp::(make-pathname%20:defaults][build-documentation]] and [[file:../../../../../../../quicklisp/dists/quicklisp/software/tinaa-20110418-git/dev/build-indexes.lisp::(defun%20index-file-name%20(part%20index-name)][index-file-name]]
+
+   Calling metabang.moptilities:function-arglist in [[file:../../../../../../../quicklisp/dists/quicklisp/software/tinaa-20110418-git/dev/utilities.lisp::(display-arguments%20(metabang.moptilities:function-arglist%20(name%20part)))][display-function]]
+
+
+
+

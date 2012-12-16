@@ -1,5 +1,7 @@
 (in-package :numeric-table)
 
+(export '(matching-rows ))
+
 (defun column-matcher (column-schema value table)
   "Return a function of a single argument N-row, the row index.  This
 function returns true if the ROW's column value matches VALUE.  This
@@ -11,7 +13,7 @@ function is used to search for a value in a specific column
 to matching
 
 - TABLE -- the table where we are looking for a match"
-;;Based on PCL p. 395"
+;;Based on PCL p. 395
   (let* ((n-column (i-column column-schema))
 	 (predicate (equality-predicate column-schema))
 	 (normalized (normalize-for-column value column-schema)))
@@ -48,7 +50,7 @@ An example of a call:
 			       value table))))
 
 (defun matching-rows (table &rest names-and-values-pairs)
-  "Build a WHERE function of index I that returns true when TABLE row
+  "Build a WHERE function of row index I that returns true when TABLE row
 I matches the NAMES-AND-VALUES.
 
 NAMES-AND-VALUES-PAIR is a pair of COLUMN-NAME and VALUE.  COLUMN-NAME
@@ -57,6 +59,8 @@ table.
 
 An example of a call:
  (matching-rows table '(name-1 value-1) '(name-2 value-2) ...)
+
+Matching
 
 PCL p. 395"
   (let ((matchers (column-matchers table names-and-values-pairs)))

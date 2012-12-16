@@ -1,3 +1,49 @@
+2012-12-15  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* init/generic-numeric-table.lisp (set-table-column): Changed
+	interface.  Before we could refer to a column using its index.
+	Now we can only use its name.  We will create another function for
+	setting the table column using the index.
+	(set-nth-column): New function, replacing functionality of
+	set-table-column with index column specifier
+	(collect-column-schema): Renamed extract-column-schema into
+	collect-column-schema
+	(column-schema): Removed definitions of all slot reader functions.
+	These will remain private.  I will use with-slots to facilitate
+	access to them.  I will add explicit functions to access
+	column-schema slots where it makes sense.
+	(normalize-for-column): Depreciated in favor of normalize-value so
+	it can be used with tables of various type
+	(column-documentation): Added method to handle option to pass a table
+	(find-column-schema nth-column-schema): Renamed arguments and
+	improved code readability
+	(collect-column-schema): Expanded argument kinds to handle tables
+	or table-schema.  Also improved code reliability
+	(numeric-table): Removed accessor to table data from `table'.
+	Table data is really a private property, and its format may change
+	in future versions of the software
+
+	* init/utilities.lisp (mklist): Added documentation
+	(init-vv-array): Renamed make-vv-array into init-vv-array
+	(vv-table-equal): Renamed vv-table-equality to vv-table-equal
+
+2012-12-12  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/linear-least-squares-fit-column.lisp: New
+	file for linear fitting
+
+	* column-major-table/table-building.lisp (set-table-column): Bug
+	fix: Added value normalization.
+
+	* init/generic-numeric-table.lisp (nth-column-schema): New function
+
+2012-12-10  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/interpolated-column.lisp: Added symbol export
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp:
+	Added symbol export
+
 2012-12-09  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/non-lin-least-sq-fit-column.lisp

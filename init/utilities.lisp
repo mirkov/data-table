@@ -1,10 +1,13 @@
 (in-package :numeric-table)
 
+(export '(init-vv-array vv-ref))
+
 (defun mklist (thing)
+  "Ensure that THING is a list.  If it is not, wrap it inside a list."
   (if (listp thing) thing (list thing)))
 
-(defun make-vv-array (columns)
-  "Return a nested vector array
+(defun init-vv-array (columns)
+  "Initialize nested vector array
 
 The outer vector is of length COLUMNS
 
@@ -17,15 +20,17 @@ dimension 0 and fill-pointer set to 0"
 
 
 (defun vvref (nested-vector i-row i-col)
+  "Return element stored in I-ROW and I-COL of NESTED-VECTOR"
   (aref (aref nested-vector i-col) i-row))
 
 (defun set-vvref (nested-vector i-row i-col value)
+  "Set element in I-ROW and I-COL of NESTED-VECTOR to VALUE"
   (setf (aref (aref nested-vector i-col) i-row) value))
 
 (defsetf vvref set-vvref)
 
 
-(defun vv-table-equality (ref-table test-table
+(defun vv-table-equal (ref-table test-table
 			  &key (test #'equal)
 			    (target-rows (loop for i below (length (aref ref-table 0))
 					      collect i))
@@ -33,7 +38,7 @@ dimension 0 and fill-pointer set to 0"
 					      collect i)))
   "Return true if elements in REF-TABLE match those in TEST-TABLE
 
-The two tables have the same number of columns, but REF-TABLE has
+The two tables have the same number of columns, but REF-TABLE may have
 fewer rows.  TARGET-ROWS is a list of row indices of REF-TABLE.
 
 The i-th row of TEST-TABLE is tested against the row addressed by

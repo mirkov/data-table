@@ -1,5 +1,9 @@
 (in-package :numeric-table)
 
+(export '(n-coeffs fit-fun fit-fun-jacobian fit-method independent-var sigma
+	  init-column-fit fit-column))
+
+
 (defclass non-lin-ls-sq-column-schema (foreign-column-schema)
   ((n-coeffs
     :accessor n-coeffs

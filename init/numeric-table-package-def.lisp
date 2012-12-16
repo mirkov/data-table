@@ -7,6 +7,7 @@
   (:import-from #:anaphora
 		:awhen
 		:it)
+  #+export-from-package-def
   (:export :row-count
 	   :column-count
 	   :data-source
@@ -24,10 +25,10 @@
 	   :number
 	   :symbol
 	   :custom
-	   :do-rows	       ;; loop over rows
-	   :do-columns	       ;; loop over columns
-	   :table	       ;; return whole table
-	   :value	       ;; return table element
+	   :do-rows    ;; loop over rows
+	   :do-columns ;; loop over columns
+	   :table      ;; return whole table
+	   :value      ;; return table element
 	   :matching-rows
 	   :interpolate ;; return numerically interpolated value
 	   )

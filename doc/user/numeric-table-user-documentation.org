@@ -2,16 +2,19 @@
 
 This is the top node for user documentation.  Separate documentation
 for developers details the internals of the code.  Documentation for
-maintainers includes instructions for generating html files.
+maintainers includes instructions for maintaining documentation and
+data files.
 
 
 
 * Table structure
 
+  The package currently supports only column-major tables.
+  
   The table is defined by its schema (we refer to it as table-schema).
-  For a column table, the schema specifies each column's type, name,
-  and other properties.  The properties for each column are called
-  column-schema.
+  For a column-major table, the schema specifies each column's type,
+  name, and other properties.  The properties for each column are
+  called column-schema.
 
   
 
@@ -38,16 +41,18 @@ maintainers includes instructions for generating html files.
 ** Creating a table
 
    Tables are created in two stages:
-   - Define a table and create a table instance
-   - Load the table with data
+   - Define a table by defining the column-schema and create a table instance
+   - Load the table with data.  The table can be loaded row by row,
+     or by loading individual columns.
    
 ** Operating on a table
    We support the following operations
    - ...
 
 ** Numerical operations on a table column 
-   We support only the following operation for now:
-   - 
+   We support only the following GSLL operation for now:
+   - Spline interpolation
+   - Linear and nonlinear least-squares fitting
 
 * Dictionary
 

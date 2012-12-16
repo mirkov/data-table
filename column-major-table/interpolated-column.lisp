@@ -1,5 +1,7 @@
 (in-package :numeric-table)
 
+(export '(interpolation-data independent-var init-column-interp interp-column))
+
 (defclass interpolated-column-schema (foreign-column-schema)
   ((interpolation-data
     :accessor interpolation-data

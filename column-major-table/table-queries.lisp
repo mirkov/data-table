@@ -272,12 +272,12 @@ same as for PETAL-LENGTH"
 		    :target-rows target-rows)))))
 
    
-(defmethod select ((from column-major-table) &key (columns t) where
+(defmethod select ((table column-major-table) &key (columns t) where
 					       distinct order-by)
-  "Return a sub-set of the table"
-  (let ((data (table from))
-        (old-schema (table-schema from))
-	(schema (table-schema from)))
+  "Return select rows from a column-major-table"
+  (let ((data (table-data table))
+        (old-schema (table-schema table))
+	(schema (table-schema table)))
 
     ;; First part of the code prunes the rows and columns via explicit tests
     (when where
