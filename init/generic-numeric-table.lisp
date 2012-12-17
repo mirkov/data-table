@@ -13,14 +13,14 @@
 	  make-column-schema
 	  normalize-for-column
 	  ;;
-	  column-names column-doc
+	  column-names column-doc empty-value
 	  find-column-schema nth-column-schema
 	  ;;
 	  select value in
 	  ))
 
 (defclass numeric-table ()
-  ((table :initarg :table
+  ((table-data :initarg :table-data
 	  :reader table-data
 	  :documentation "Table data")
    (row-count :reader row-count
@@ -166,13 +166,16 @@ EMPTY-VALUE is the value that signifies an unspecified cell
 		   :equality-predicate #'string=
 		   :default-type 'string
 		   :documentation documentation))
-  (:method  (name (type (eql 'number)) &key documentation &allow-other-keys)
+  (:method  (name (type (eql 'number)) &key documentation
+					 empty-value
+					 &allow-other-keys)
     (make-instance 'column-schema
 		   :name name
 		   :comparator #'<
 		   :equality-predicate #'=
 		   :default-type 'number
-		   :documentation documentation))
+		   :documentation documentation
+		   :empty-value empty-value))
   (:method (name (type (eql 'symbol)) &key documentation &allow-other-keys)
     (make-instance 'column-schema
 		   :name name
@@ -219,6 +222,7 @@ EMPTY-VALUE is the value that signifies an unspecified cell
 	#'(lambda (value column-schema)
 	    (declare (ignore column-schema))
 	    (assert (typep value default-type))))))
+
 
 (defgeneric normalize-value (value schema)
   (:documentation "Normalize VALUE according to SCHEMA
@@ -312,3 +316,5 @@ the desired row.
 
 COLUMN-NAME is a column name as stored "))
 
+(defgeneric read-table (stream table)
+  (:documentation "Read TABLE from STREAM"))

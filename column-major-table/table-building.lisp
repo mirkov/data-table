@@ -1,10 +1,12 @@
 (in-package :numeric-table)
 
+(export '(row-by-row insert-row))
+
 (defmethod insert-row ((row list) (table column-major-table))
   "Insert a new table row
 
 If the table is bare, initialize it and specify the build method."
-  (with-slots (build-method table column-count row-count table-schema) table
+  (with-slots (build-method table-data column-count row-count table-schema) table
     (assert table-schema ()
 	    "The table must have a schema")
     (assert (= (length table-schema)
@@ -15,14 +17,15 @@ If the table is bare, initialize it and specify the build method."
       ((null build-method)
        (setf build-method 'row-by-row)
        (dotimes (i column-count)
-	 (setf (aref table i) (make-array 0 :adjustable t :fill-pointer 0))))
+	 (print i)
+	 (setf (aref table-data i) (make-array 0 :adjustable t :fill-pointer 0))))
       ((eql build-method 'row-by-row))
       (t 
-       (error "Table build-method is not defined as row-by-row.  It is ~a"
+       (error "Table build-method:~a is not defined as row-by-row"
 	      build-method)))
     (loop
        :for value in row
-       :for table-column across table
+       :for table-column across table-data
        :for column-schema in table-schema
        :for column-index from 0
        :do (vector-push-extend (normalize-value value column-schema)

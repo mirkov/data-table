@@ -4,21 +4,21 @@
   (list (row-count table) (column-count table)))
 
 (defmethod nth-row ((n integer) (table column-major-table))
-  (with-slots (row-count column-count table) table
+  (with-slots (row-count column-count table-data) table
       (assert (< n row-count) ()
 	      "Row index ~a exceeds row-count ~a" n row-count)
     (let ((row (make-array column-count)))
-      (loop :for column across table
+      (loop :for column across table-data
 	 :for i from 0
 	 :do (setf (aref row i) (aref column n)))
       row)))
 
 (defmethod nth-column ((n integer) (table column-major-table))
-  (with-slots (column-count table) table
+  (with-slots (column-count table-data) table
   (assert (< n column-count) ()
 	  "Column index ~a is greater than number of columns ~a"
 	  n column-count)
-  (aref table n)))
+  (aref table-data n)))
 
 (defmacro with-bare-test-table (&body body)
   `(let ((test-table

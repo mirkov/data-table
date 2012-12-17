@@ -1,3 +1,22 @@
+2012-12-16  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/matching-functions.lisp (column-matcher):
+	expanded definition so that the testing can be done against a
+	function, and not only a value.  The testing is against normalized
+	values, which is a drawback.
+
+	* column-major-table/table-queries.lisp (select): Fixed
+	reference to table-data slot
+
+	* column-major-table/column-major-table-classes.lisp (make-table):
+	Refering now to table-data slot instead of table slot
+
+	* init/generic-numeric-table.lisp (make-column-schema): Added
+	empty-value keyword argument to `number'.  I will have to add it
+	to the other ones as well
+	(numeric-table): Renamed `table' slot to `table-data'.  Also
+	renamed initarg and reader
+
 2012-12-15  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* init/generic-numeric-table.lisp (set-table-column): Changed

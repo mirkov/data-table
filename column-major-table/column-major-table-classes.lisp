@@ -1,5 +1,9 @@
 (in-package :numeric-table)
 
+
+(export '(column-major-table))
+
+
 ;;; Classes and methods for instantiating column-major tables
 (defclass column-major-table (numeric-table)
   ()
@@ -58,7 +62,7 @@ name and column type"
   (let ((table (make-instance type
 			      :table-schema schema)))
     (setf (slot-value table 'column-count) (length schema)
-	  (slot-value table 'table) (make-array (slot-value table 'column-count)))
+	  (slot-value table 'table-data) (make-array (slot-value table 'column-count)))
     (awhen build-method
       (setf (slot-value table 'build-method) it))
     (awhen data-source

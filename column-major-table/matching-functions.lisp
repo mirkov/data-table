@@ -1,11 +1,17 @@
 (in-package :numeric-table)
 
-(export '(matching-rows ))
+(export '(matching-rows empty-p))
 
-(defun column-matcher (column-schema value table)
-  "Return a function of a single argument N-row, the row index.  This
-function returns true if the ROW's column value matches VALUE.  This
-function is used to search for a value in a specific column
+
+(defgeneric column-matcher (column-schema value-or-test table &optional predicate)
+  (:documentation 
+   "Return a function of a single argument N-row, the row index.  This
+function returns true if the ROW's column value matches VALUE or satisfies 
+FUNCTION returns T.
+")
+  (:method ((column-schema column-schema) (value t) table &optional predicate)
+    "Return a function of a single argument N-row, the row index.  This
+function returns true if the ROW's column value matches VALUE.
 
 - COLUMN-SCHEMA -- a column schema
 
@@ -13,16 +19,36 @@ function is used to search for a value in a specific column
 to matching
 
 - TABLE -- the table where we are looking for a match"
-;;Based on PCL p. 395
-  (let* ((n-column (slot-value column-schema 'i-column))
-	 (predicate (slot-value column-schema 'equality-predicate))
-	 (normalized (normalize-value value column-schema)))
-    (assert n-column ()
-	    "Column index:~a is nil" n-column)
-    #'(lambda (N-row)
-	(funcall predicate
-		 (vvref (table-data table) N-row n-column)
-		 normalized))))
+    ;;Based on PCL p. 395
+    (let* ((n-column (slot-value column-schema 'i-column))
+	   (predicate
+	    (aif predicate it
+		 (slot-value column-schema 'equality-predicate)))
+	   (normalized (normalize-value value column-schema))
+	   (table-data (table-data table)))
+      (assert n-column ()
+	      "Column index:~a is nil" n-column)
+      #'(lambda (N-row)
+	  (funcall predicate
+		   (vvref table-data N-row n-column)
+		   normalized))))
+  (:method ((column-schema column-schema) (test (eql 'empty-p)) table
+	    &optional predicate)
+    "Return a function of a single argument N-row, the row index.  This
+function returns true if the columns value equals the empty value"
+    (declare (ignore dummy-arg))
+    (let* ((n-column (slot-value column-schema 'i-column))
+	   (predicate
+	    (aif predicate it
+		 (slot-value column-schema 'equality-predicate)))
+	   (table-data (table-data table))
+	   (empty-value (empty-value column-schema)))
+      (assert n-column ()
+	      "Column index:~a is nil" n-column)
+      #'(lambda (N-row)
+	  (funcall predicate
+		   (vvref table-data N-row n-column)
+		   empty-value)))))
 
 (define-test column-schema-matcher
   (let* ((table (loaded-test-table))
@@ -44,18 +70,18 @@ An example of a call:
 "
   (let ((schema (table-schema table)))
     (loop 
-       for (name value) in names-and-values
+       for (name value . predicate-maybe) in names-and-values
        when value
        collect (column-matcher (find-column-schema name schema)
-			       value table))))
+			       value table (car predicate-maybe)))))
 
 (defun matching-rows (table &rest names-and-values-pairs)
   "Build a WHERE function of row index I that returns true when TABLE row
-I matches the NAMES-AND-VALUES.
+I matches the NAMES-AND-VALUES/FUNCTIONS.
 
-NAMES-AND-VALUES-PAIR is a pair of COLUMN-NAME and VALUE.  COLUMN-NAME
-corresponds to a column schema name, and value to a value stored in a
-table.
+NAMES-AND-VALUES-PAIR is a pair of COLUMN-NAME and VALUE or FUNCTION.
+COLUMN-NAME corresponds to a column schema name, and value to a value
+stored in a table.
 
 An example of a call:
  (matching-rows table '(name-1 value-1) '(name-2 value-2) ...)
@@ -108,3 +134,6 @@ The function returns nil if no value matches the WHERE and COLUMN-NAME"
       (assert-number-equal 1.7 (value table :where mf :column-name 'petal-length)))
     (let ((mf (matching-rows  table '(sepal-length 5.4) '(petal-width 99))))
       (assert-true (not (value table :where mf :column-name 'sepal-width))))))
+
+#+unfinished(defmethod in ((table column-major-table) name)
+  (member))

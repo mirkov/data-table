@@ -28,6 +28,7 @@
 	     (:file "table-queries")
 	     (:file "matching-functions")
 	     (:file "data-access")
+	     (:file "cmt-io")
 	     (:file "foreign-column")
 	     (:file "interpolated-column")
 	     (:file "non-lin-least-sq-fit-column"))

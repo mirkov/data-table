@@ -5,7 +5,7 @@
   (:import-from :alexandria
 		#:with-gensyms)
   (:import-from #:anaphora
-		:awhen
+		:awhen :aif
 		:it)
   #+export-from-package-def
   (:export :row-count

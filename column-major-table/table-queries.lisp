@@ -6,7 +6,9 @@
 This function will return the list of values of TABLE's row I in
 columns identified by column-name of the new TABLE-SCHEMA
 
-TABLE-SCHEMA is supposed to be a sub-set of TABLE's own table-schema")
+TABLE-SCHEMA is supposed to be a sub-set of TABLE's own table-schema
+
+EXTRACTOR is used when we want to return a sub-set of the table's columns")
 ;;; Modeled after PCL's routine on p. 393
   (:method ((old-table column-major-table) (table-schema cons))
     (let* ((table-schema/old (table-schema old-table))
@@ -298,7 +300,8 @@ same as for PETAL-LENGTH"
 	    (sorted-rows data (mklist order-by) schema)))
 
     (let ((new-table
-	   (make-instance 'column-major-table :table data :table-schema schema)))
+	   (make-instance 'column-major-table :table-data data
+			  :table-schema schema)))
       (setf (slot-value new-table 'column-count)
 	    (length (table-data new-table))
 	    (slot-value new-table 'row-count)
@@ -344,3 +347,4 @@ We test on the new table dimensions and contents"
       (assert-true (vv-table-equal
 		    data (table-data new-table)
 		    :target-rows target-rows)))))
+
