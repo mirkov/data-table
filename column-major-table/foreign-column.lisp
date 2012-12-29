@@ -1,5 +1,6 @@
 (in-package :numeric-table)
 
+(export '(foreign-double-float))
 
 (defclass foreign-column-schema (column-schema)
   ()
@@ -7,13 +8,17 @@
 appropriate for GSLL and other C and Fortran libraries"))
 
 (defmethod make-column-schema  (name (type (eql 'foreign-double-float))
-			&key documentation &allow-other-keys)
-    (make-instance 'foreign-column-schema
-		   :name name
-		   :comparator #'<
-		   :equality-predicate #'=
-		   :default-type 'number
-		   :documentation documentation))
+			&key documentation
+			  value-normalizer &allow-other-keys)
+    (let ((schema (make-instance 'foreign-column-schema
+				 :name name
+				 :comparator #'<
+				 :equality-predicate #'=
+				 :default-type 'number
+				 :documentation documentation)))
+      (awhen value-normalizer
+	(setf (slot-value schema 'value-normalizer) it))
+      schema))
 
 (defmethod initialize-instance :after ((self (eql 'foreign-column-schema)) &key)
   (with-slots (value-normalizer default-type) self

@@ -30,7 +30,9 @@ If the table is bare, initialize it and specify the build method."
        :for column-index from 0
        :do (vector-push-extend (normalize-value value column-schema)
 			     table-column))
-    (incf row-count)))
+    (incf row-count)
+    (dotimes (i column-count)
+      (adjust-array (aref table-data i) row-count))))
 
 (define-test insert-row
   "Test dimensions of table that was build row-by-row"

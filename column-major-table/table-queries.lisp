@@ -46,12 +46,16 @@ EXTRACTOR is used when we want to return a sub-set of the table's columns")
 WHERE is a function of one argument: the table row index"
   (let* ((column-count (length data))
 	 (row-count (length (aref data 0)))
-	 (new-data (init-vv-array column-count)))
+	 (new-data (init-vv-array column-count))
+	 (i-row 0))
     (dotimes (i row-count)
       (when (funcall where i)
 	(dotimes (j column-count)
 	  (vector-push-extend (vvref data i j)
-			      (aref new-data j)))))
+			      (aref new-data j)))
+	(incf i-row)))
+    (dotimes (i column-count)
+      (adjust-array (aref new-data i) i-row))
     new-data))
 
 (define-test restrict-rows-1

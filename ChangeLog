@@ -1,4 +1,53 @@
+2012-12-29  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* numeric-table-user.asd (#:numeric-table-user): Changed email,
+	added MIT license, added version number.
+
+	* init/generic-numeric-table.lisp (make-column-schema): Added
+	&allow-other-keys to custom schema type
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp
+	(non-lin-ls-sq-column-schema): Updated exported symbol list
+	(make-column-schema): Fixed so that it takes sotres the
+	value-normalizer.  Same comment as for
+	linear-least-squares-fit-column applies.  I have code duplication
+	here.
+
+	* column-major-table/linear-least-squares-fit-column.lisp
+	(linear-least-squares-column-schema): Added symbol export
+	(linear-least-squares-column-schema): Tweaked interface and slot names
+	(make-column-schema): Added method for making column schema.  As
+	currently specified, it duplicates most of the same method for
+	foreign-column-schema.  I need to figure out a way to refactor
+	this
+	(linear-fit): using grid:copy to ensure that I am using foreign
+	arrays for x, y, and w.  This is surprising, as I expected columns
+	to be stored as foreign arrays already.
+	(linear-fit-estimate, multiplier-fit, multiplier-fit-estimate):
+	Added methods
+
+2012-12-17  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/table-queries.lisp (restrict-rows): Added
+	code to fix the adjustable array size, eliminating the padded
+	elements
+	(extract-schema): Found unexpected bug/feature.  This is a
+	non-destructive function.  Thus the new schema may be the list
+	instance as the old schema.  This is not always what I want.  I
+	may want to create a copy of the schema.
+
+	* column-major-table/table-building.lisp (insert-row): Added code
+	to adjust the array size after adding a row.  clisp pads the
+	adjustable array, leading to faulty reported dimensions.
+
 2012-12-16  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp
+	(make-column-schema): Added handling of value normalizers
+
+
+	* column-major-table/foreign-column.lisp (make-column-schema):
+	Added handling of value normalizers
 
 	* column-major-table/matching-functions.lisp (column-matcher):
 	expanded definition so that the testing can be done against a

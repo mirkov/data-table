@@ -143,8 +143,9 @@ size might not be meaningful"))
   (:documentation "Store the schema for a column"))
 
 (defgeneric make-column-schema (name type
-			      &key comparator equality-predicate
-			      default-type documentation empty-value
+				&key comparator equality-predicate
+				default-type documentation empty-value
+				value-normalizer
 			      &allow-other-keys)
   (:documentation "Make instance of COLUMN-SCHEMA object with NAME and
   specialized to hold data of TYPE
@@ -185,7 +186,7 @@ EMPTY-VALUE is the value that signifies an unspecified cell
 		   :equality-predicate #'eq
 		   :default-type 'symbol
 		   :documentation documentation))
-  (:method (name (type (eql 'custom)) &key comparator equality-predicate default-type documentation empty-value)
+  (:method (name (type (eql 'custom)) &key comparator equality-predicate default-type documentation empty-value &allow-other-keys)
     (make-instance 'column-schema
 		   :name name
 		   :comparator comparator

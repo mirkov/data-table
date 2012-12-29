@@ -1,6 +1,7 @@
 (in-package :numeric-table)
 
-(export '(n-coeffs fit-fun fit-fun-jacobian fit-method independent-var sigma
+(export '(non-lin-ls-sq-column-schema
+	  n-coeffs fit-fun fit-fun-jacobian fit-method independent-var sigma
 	  init-column-fit fit-column))
 
 
@@ -75,17 +76,21 @@ fitting is initialized in INIT-COLUMN-FIT."))
 The schema stores GSLL's method, and the functions that will be called by ..."))
 
 (defmethod make-column-schema  (name (type (eql 'non-lin-ls-sq-column-schema))
-			&key documentation &allow-other-keys)
+				&key documentation 
+				  value-normalizer &allow-other-keys)
   "Makes instance of a non-lin-ls-sq-column-schema.
 
 It replicates the code for foreign-column-schema.  Can I remove this
 duplication?"
-    (make-instance 'non-lin-ls-sq-column-schema
-		   :name name
-		   :comparator #'<
-		   :equality-predicate #'=
-		   :default-type 'number
-		   :documentation documentation))
+  (let ((schema (make-instance 'non-lin-ls-sq-column-schema
+			       :name name
+			       :comparator #'<
+			       :equality-predicate #'=
+			       :default-type 'number
+			       :documentation documentation)))
+    (awhen value-normalizer
+      (setf (slot-value schema 'value-normalizer) it))
+      schema))
 
 (defmethod init-column-fit (y-name
 			    x-name

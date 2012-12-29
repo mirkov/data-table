@@ -1,12 +1,10 @@
-;;;; numeric-table.asd
-
 (asdf:defsystem #:numeric-table
   :serial t
   :description "Storage, queries, filtering, and numerical analysis of
   tabular data"
-  :author "Mirko Vukovic <mirko.vukovic@us.tel.com>"
+  :author "Mirko Vukovic <mirko.vukovic@gmail.com>"
   :version "0.1"
-  :license "Unspecified"
+  :license "MIT"
   :depends-on ("lisp-unit"
 	       "alexandria"
 	       "anaphora"
