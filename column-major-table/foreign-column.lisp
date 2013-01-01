@@ -2,25 +2,14 @@
 
 (export '(foreign-double-float))
 
-(defclass foreign-column-schema (column-schema)
+(defclass foreign-column-schema (number-column-schema)
   ()
   (:documentation "Schema for data stored in as foreign vectors
 appropriate for GSLL and other C and Fortran libraries"))
 
-(defmethod make-column-schema  (name (type (eql 'foreign-double-float))
-			&key documentation
-			  value-normalizer &allow-other-keys)
-    (let ((schema (make-instance 'foreign-column-schema
-				 :name name
-				 :comparator #'<
-				 :equality-predicate #'=
-				 :default-type 'number
-				 :documentation documentation)))
-      (awhen value-normalizer
-	(setf (slot-value schema 'value-normalizer) it))
-      schema))
+(add-column-schema-short+long-names 'foreign-column 'foreign-column-schema)
 
-(defmethod initialize-instance :after ((self (eql 'foreign-column-schema)) &key)
+#+skip(defmethod initialize-instance :after ((self (eql 'foreign-column-schema)) &key)
   (with-slots (value-normalizer default-type) self
   (setf value-normalizer
 	#'(lambda (value column-schema)
@@ -29,36 +18,46 @@ appropriate for GSLL and other C and Fortran libraries"))
 	    (float value 1d0)))))
 
 
-(defmethod set-table-column ((column-table column-major-table)
-			     column-identifier
-			     (column-vector grid:vector-double-float)
-			     &key (overwrite nil))
-  (let ((column-index
-	 (typecase column-identifier
-	   (symbol (position column-identifier
-			      (column-names column-table)))
-	   (integer column-identifier)
-	   (t (error "column-identifier type, ~a~, can be either an integer
-or a symbol" (type-of column-identifier))))))
-    (with-slots (build-method table column-count row-count table-schema) column-table
-      (assert (typep (nth column-index table-schema)
-			  'foreign-column-schema)
-	      () "Column schema must be a foreign-column-schema")
-      (assert (or (null build-method)
-		  (eq 'set-column build-method)) ()
-		  "Table build method, ~a, must be either NULL or SET-COLUMN"
-		  build-method)
-      (unless build-method
-	(setf build-method 'set-column
-	      row-count (grid:dim0 column-vector)))
-      (assert (< column-index column-count) ()
-	      "Column index ~a is greater than number of columns ~a"
-	      column-index column-count)
-      (when
-	  (and (not (null (aref table column-index) ))
-	       (not overwrite))
-	(error "Attempting to overwrite column ~a" column-index))
-      (assert (= (grid:dim0 column-vector) row-count) ()
-	      "The new column length ~a does not match table row count ~a"
-	      (grid:dim0 column-vector) row-count)
-      (setf (aref table column-index) column-vector))))
+(defun foreign-column-suptypep (schema)
+  "Return true if SCHEMA type is a subtype of FOREIGN-COLUMN-SCHEMA"
+  (subtypep (type-of schema)
+	    'foreign-column-schema))
+
+
+(defmethod set-nth-column :around ((column-index integer)
+				   (table column-major-table)
+				   (column-vector grid:vector-double-float)
+				   &key (overwrite nil))
+  (declare (ignore overwrite))
+  (let ((grid:*default-grid-type* 'grid:foreign-array))
+    (call-next-method)))
+
+
+(defmethod set-nth-column :before ((column-index integer)
+				   (table column-major-table)
+				   (column-vector grid:vector-double-float)
+				   &key (overwrite nil))
+  (assert (foreign-column-suptypep (nth column-index
+					(table-schema table)))
+	  () "Column schema: ~a, must be a foreign-column-schema"))
+
+(defmethod vector-length ((vector grid:vector-double-float))
+  (grid:dim0 vector))
+
+(define-test set-table-foreign-column
+  "Test dimesions of table that was build column-by-column"
+  (let ((table (make-table 'column-major-table
+			   (make-table-schema 'column-major-table
+					      '((x number) (y foreign-column))))))
+    (dotimes (i-column 2)
+      (set-nth-column i-column
+		      table
+       (make-array
+	3
+	:initial-contents (loop :for i-row below 3
+			     :collect (aref *flower-data* i-row i-column)))))
+    (assert-equal 2 (column-count table))
+    (assert-equal 3 (row-count table))
+    (assert-number-equal 4.9 (vvref (table-data table) 0 0))
+    (assert-number-equal 3.2 (vvref (table-data table) 1 1))
+    (nth-column 1 table)))

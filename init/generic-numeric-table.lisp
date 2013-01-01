@@ -109,12 +109,16 @@ size might not be meaningful"))
 (defclass column-schema ()
   ((name :reader column-name
 	 :initarg :name)
+   ;; following slots are specialized by more specific classes
    (equality-predicate :reader equality-predicate
-		       :initarg :equality-predicate
-		       :initform #'=)
+		       :initform nil)
    (comparator :reader comparator
-	       :initarg :comparator
-	       :initform #'>)
+	       :initform nil)
+   (default-type :reader default-type
+     :initarg :default-type
+     :initform nil
+     :documentation "Stored values will be compared against the type")
+   ;; The remaining slots are specified when the column schema is instantiated
    (value-normalizer :reader value-normalizer
 		     :initarg :value-normalizer
 		     :initform #'(lambda (v column)
@@ -123,10 +127,6 @@ size might not be meaningful"))
    (default-value :reader default-value
      :initarg :default-value
      :initform nil)
-   (default-type :reader default-type
-     :initarg :default-type
-     :initform nil
-     :documentation "Stored values will be compared against the type")
    (i-column :reader i-column
 	     :initarg :i-column
 	     :initform nil
@@ -138,91 +138,84 @@ size might not be meaningful"))
    (empty-value :initarg :empty-value
 		:initform nil
 		:reader empty-value
-		:documentation "Value that signifies an empty cell")
-   )
-  (:documentation "Store the schema for a column"))
+		:documentation "Value that signifies an empty cell"))
+  (:documentation "Basic column schema
 
-(defgeneric make-column-schema (name type
-				&key comparator equality-predicate
-				default-type documentation empty-value
-				value-normalizer
-			      &allow-other-keys)
-  (:documentation "Make instance of COLUMN-SCHEMA object with NAME and
-  specialized to hold data of TYPE
+This is a virtual class, not meant to be instantiated.  All of its
+slots are uninitialized.  They will be initialized by the
+sub-classes"))
 
-If TYPE is 'custom, then keywords COMPARATOR, EQUALITY-PREDICATE,
-DEFAULT-TYPE must be used to specify the column:
+(defclass string-column-schema (column-schema)
+  ((equality-predicate :reader equality-predicate
+		       :initform #'string=)
+   (comparator :initform #'string<)
+   (default-type :initform 'string))
+  (:documentation "Column schema for storing string values"))
 
-COMPARATOR and EQUALITY-PREDICATE must be functions that accept two
-arguments and return t or nil
+(defclass number-column-schema (column-schema)
+  ((equality-predicate :reader equality-predicate
+		       :initform #'=)
+   (comparator :initform #'<)
+   (default-type :initform 'number))
+  (:documentation "Column schema for storing numerical values"))
 
-DEFAULT-TYPE must be a type specification that will be passed to TYPEP.
+(defclass symbol-column-schema (column-schema)
+  ((equality-predicate :reader equality-predicate
+		       :initform #'eq)
+   (comparator :initform #'string<)
+   (default-type :initform 'symbol))
+  (:documentation "Column schema for storing symbols"))
 
-EMPTY-VALUE is the value that signifies an unspecified cell
-")
-  (:method  (name (type (eql 'string)) &key documentation &allow-other-keys)
-    (make-instance 'column-schema
-		   :name name
-		   :comparator #'string<
-		   :equality-predicate #'string=
-		   :default-type 'string
-		   :documentation documentation))
-  (:method  (name (type (eql 'number)) &key documentation
-					 empty-value
-					 &allow-other-keys)
-    (make-instance 'column-schema
-		   :name name
-		   :comparator #'<
-		   :equality-predicate #'=
-		   :default-type 'number
-		   :documentation documentation
-		   :empty-value empty-value))
-  (:method (name (type (eql 'symbol)) &key documentation &allow-other-keys)
-    (make-instance 'column-schema
-		   :name name
-		   :comparator #'(lambda (arg1 arg2)
-				   (string<  arg1
-					     arg2))
-		   :equality-predicate #'eq
-		   :default-type 'symbol
-		   :documentation documentation))
-  (:method (name (type (eql 'custom)) &key comparator equality-predicate default-type documentation empty-value &allow-other-keys)
-    (make-instance 'column-schema
-		   :name name
-		   :comparator comparator
-		   :equality-predicate equality-predicate
-		   :default-type default-type
-		   :empty-value empty-value
-		   :documentation documentation)))
 
-;;; Loading of value-normalizer.  By default it checks that the value
-;;; is of correct type, as specified by default type
-;;;
-;;; I thus initialize it only after default-type is loaded.
-(defmethod initialize-instance :after ((self (eql 'string)) &key)
+;; I am not sure that value-normalization should check for type
+;; correctness
+#+skip
+(defmethod initialize-instance :after ((self (eql 'column-schema)) &key)
   (with-slots (value-normalizer default-type) self
     (setf value-normalizer
 	  #'(lambda (value column-schema)
 	      (declare (ignore column-schema))
 	      (assert (typep value default-type))))))
-(defmethod initialize-instance :after ((self (eql 'number)) &key)
-  (with-slots (value-normalizer default-type) self
-  (setf value-normalizer
-	#'(lambda (value column-schema)
-	    (declare (ignore column-schema))
-	    (assert (typep value default-type))))))
-(defmethod initialize-instance :after ((self (eql 'symbol)) &key)
-  (with-slots (value-normalizer default-type) self
-  (setf value-normalizer
-	#'(lambda (value column-schema)
-	    (declare (ignore column-schema))
-	    (assert (typep value default-type))))))
-(defmethod initialize-instance :after ((self (eql 'index)) &key)
-  (with-slots (value-normalizer default-type) self
-  (setf value-normalizer
-	#'(lambda (value column-schema)
-	    (declare (ignore column-schema))
-	    (assert (typep value default-type))))))
+
+;;; Code dealing with short and long names for column-schema
+(defparameter *valid-column-schema*
+  nil
+  "A list of valid column schemas.  It stores a short and a long form.
+  The short form, is used by users, and the long-form, that refers to
+  the class name")
+
+(defun add-column-schema-short+long-names (short-name long-name)
+  (setf *valid-column-schema*
+	(remove short-name *valid-column-schema* :key #'car :test #'eq))
+  (push (cons short-name long-name) *valid-column-schema*))
+
+
+(progn
+  (add-column-schema-short+long-names 'string 'string-column-schema)
+  (add-column-schema-short+long-names 'number 'number-column-schema)
+  (add-column-schema-short+long-names 'symbol 'symbol-column-schema))
+
+(defun column-schema-long-name (short-name)
+  "Return long-name for column-schema"
+  (let ((long-name (cdr (assoc short-name *valid-column-schema*))))
+    (assert long-name ()
+	    "Short name: ~a, is not valid" short-name)
+    long-name))
+
+;;; End of code dealing with long and short names for column-schema
+
+(defun make-column-schema (name type
+				&key documentation empty-value
+				value-normalizer)
+  "Return instance of a column-schema "
+  (let ((column-schema 
+	 (make-instance (column-schema-long-name type)
+			:name name
+			:documentation documentation
+			:empty-value empty-value)))
+    (awhen value-normalizer
+      (setf (value-normalizer column-schema) it))
+    column-schema))
 
 
 (defgeneric normalize-value (value schema)
@@ -230,7 +223,7 @@ EMPTY-VALUE is the value that signifies an unspecified cell
 
 SCHEMA can be a COLUMN-SCHEMA or (when implemented) ROW-SCHEMA")
   (:method (value (column-schema column-schema))
-    (funcall (slot-value column-schema 'value-normalizer)
+    (funcall (value-normalizer column-schema)
 	     value column-schema)))
 
 (defgeneric column-names (table/table-schema)

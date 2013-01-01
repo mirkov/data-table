@@ -29,6 +29,8 @@
 	     (:file "cmt-io")
 	     (:file "foreign-column")
 	     (:file "interpolated-column")
+	     (:file "column-fitting")
+	     (:file "linear-least-squares-fit-column")
 	     (:file "non-lin-least-sq-fit-column"))
 	    )
    #+2d-table-implemented

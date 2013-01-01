@@ -25,24 +25,26 @@ the interpolation on subsequent calls"))
 The schema stores GSL's interpolation object, the name of the
 independent variable and the GSL accelerator"))
 
-(defmethod make-column-schema  (name (type (eql 'interpolated-column-schema))
-			&key documentation &allow-other-keys)
-    (make-instance 'interpolated-column-schema
-		   :name name
-		   :comparator #'<
-		   :equality-predicate #'=
-		   :default-type 'number
-		   :documentation documentation))
+(add-column-schema-short+long-names 'interpolated-column
+				    'interpolated-column-schema)
 
-(defmethod init-column-interp (y-name
-			       x-name
-			       (column-table numeric-table))
-  (let ((y-schema (find-column-schema y-name column-table))
-	(x-schema (find-column-schema x-name column-table))
-	(table-schema (table-schema column-table)))
-    (assert (typep y-schema 'interpolated-column-schema) ()
-	    "Column-name: ~a, must refer to a interpolated-column-schema"
-	    y-name)
+
+(defgeneric init-column-interp (table y-column)
+  (:documentation "Initialize column interpolation for TABLE's Y-COLUMN
+
+TABLE is a column major table
+Y-COLUMN is either a column name or a column schema
+X-VALUE is a number")
+  (:method ((table column-major-table) (column-name symbol))
+    (init-column-interp table (find-column-schema column-name table))))
+
+(defmethod init-column-interp ((column-table numeric-table)
+			       (y-schema interpolated-column-schema))
+  (let* ((x-schema (find-column-schema
+		   (independent-var y-schema) column-table))
+	 (x-name (column-name x-schema))
+	 (y-name (column-name y-schema))
+	 (table-schema (table-schema column-table)))
     (assert (typep x-schema 'foreign-column-schema) ()
 	    "Column-name: ~a, must refer to a foreign-column-schema"
 	    x-name)
@@ -79,11 +81,12 @@ polynomical."
 				      :initial-contents (second values))))
       (let ((table (make-table 'column-major-table
 			       (make-table-schema 'column-major-table
-						  '((x-col foreign-double-float)
-						    (y-col interpolated-column-schema))))))
-	(set-table-column table 0 x)
-	(set-table-column table 1 y)
-	(init-column-interp 'y-col 'x-col table)
+						  '((x-col foreign-column)
+						    (y-col interpolated-column))))))
+	(set-nth-column 0 table x)
+	(set-nth-column 1 table y)
+	(setf (independent-var (find-column-schema 'y-col table)) 'x-col)
+	(init-column-interp table 'y-col)
 	(let ((*epsilon* 1e-4))
 	  (assert-number-equal (expt 5.2 2)
 			       (interp-column 'y-col 5.2 table)))))))

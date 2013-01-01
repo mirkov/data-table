@@ -2,45 +2,11 @@
 
 (export '(non-lin-ls-sq-column-schema
 	  n-coeffs fit-fun fit-fun-jacobian fit-method independent-var sigma
-	  init-column-fit fit-column))
+	  init-nonlin-column-fit fit-column))
 
 
-(defclass non-lin-ls-sq-column-schema (foreign-column-schema)
-  ((n-coeffs
-    :accessor n-coeffs
-    :initform nil
-    :documentation "Number of fitting coefficients.
-
-Set via INIT-COLUMN-FIT")
-   (fit-fun
-    :accessor fit-fun
-    :initform nil
-    :documentation "Fitting function of arguments X, fit-coeffs.
-
-Set via INIT-COLUMN-FIT
-")
-   (fit-fun-jacobian
-    :accessor fit-fun-jacobian
-    :initform nil
-    :documentation "The Jacobian of the fitting function with respect
-    to its coefficients.  It's arguments are X and fit-coeffs
-
-Set via INIT-COLUMN-FIT")
-   (fit-method
-    :accessor fit-method
-    :initform gsll:+levenberg-marquardt+
-    :documentation "fitting method, such as +levenberg-marquardt+
-
-Set via INIT-COLUMN-FIT")
-   (independent-var
-    :accessor independent-var
-    :initform nil
-    :documentation "Name of column with independent data")
-   (sigma
-    :accessor sigma
-    :initform nil
-    :documentation "Name of column or a double-float specifying the sigma
-Set via INIT-COLUMN-FIT")
+(defclass non-lin-ls-sq-column-schema (nonlinear-column-fit foreign-column-schema)
+  (
    ;;; The following are private slots
    (residual+jacobian-fun
     :initform nil
@@ -50,7 +16,7 @@ The function arguments are COEFFS, RESIDUALS, JACOBIAN.  The latter
 two are destructively modified with new values.
 
 This is a private function that is generated on the fly when the
-fitting is initialized in INIT-COLUMN-FIT.")
+fitting is initialized in INIT-NONLIN-COLUMN-FIT.")
    (load-residuals-fun
     :initform nil
     :documentation "Function that calculates the residuals
@@ -59,7 +25,7 @@ The function arguments are COEFFS and RESIDUALS.  The latter is
 destructively modified with new values.
 
 This is a private function that is generated on the fly when the
-fitting is initialized in INIT-COLUMN-FIT.")
+fitting is initialized in INIT-NONLIN-COLUMN-FIT.")
    (load-jacobian-fun
     :initform nil
     :documentation "Function that calculates Jacobian matrix of
@@ -69,90 +35,70 @@ The function arguments are COEFFS and JACOBIAN.  The latter is
 destructively modified with new values.
 
 This is a private function that is generated on the fly when the
-fitting is initialized in INIT-COLUMN-FIT."))
+fitting is initialized in INIT-NONLIN-COLUMN-FIT."))
   (:documentation "Stores data (both public and private) for nonlinear
   least square fitting via GSLL.
 
 The schema stores GSLL's method, and the functions that will be called by ..."))
 
-(defmethod make-column-schema  (name (type (eql 'non-lin-ls-sq-column-schema))
-				&key documentation 
-				  value-normalizer &allow-other-keys)
-  "Makes instance of a non-lin-ls-sq-column-schema.
+(add-column-schema-short+long-names 'nonlinear-ls-sq-column 
+				    'non-lin-ls-sq-column-schema)
 
-It replicates the code for foreign-column-schema.  Can I remove this
-duplication?"
-  (let ((schema (make-instance 'non-lin-ls-sq-column-schema
-			       :name name
-			       :comparator #'<
-			       :equality-predicate #'=
-			       :default-type 'number
-			       :documentation documentation)))
-    (awhen value-normalizer
-      (setf (slot-value schema 'value-normalizer) it))
-      schema))
-
-(defmethod init-column-fit (y-name
-			    x-name
-			    sigma-name-or-val
-			    (column-table column-major-table)
-			    fit-fun
-			    fit-fun-jacobian
-			    n-coeffs)
+(defmethod init-nonlin-column-fit ((y-schema non-lin-ls-sq-column-schema)
+				   (table column-major-table)
+				   fit-fun
+				   fit-fun-jacobian
+				   n-coeffs)
   "Initializes a column before we call non-lin-fit
 
 Syntax:
 
-init-column-fit y-name x-name table fit-fun fit-fun-jacobian n-coeffs
+init-nonlin-column-fit y-name x-name table fit-fun fit-fun-jacobian n-coeffs
 
 Arguments and Values:
 
-- y-name - Dependent variable column name, a symbol
-- x-name - Independent variable column name, a symbol
-- sigma-name-or-val - uncertainty in y.  A column name (a symbol), or a double float
-- table - a numeric-table
+- y-name - Dependent variable column name, a column schema
+- table - a column-major-table
 - fit-fun - The fitted function, a function designator
 - fit-fun-jacobian - The jacobian of the fit function, a function designator
 - n-coeffs - Number of coefficients of fit-fun, an integer
 
 Description:
 
-INIT-COLUMN-FIT performs initializations necessary to call GSLL's non-linear fitting functions on the data of the dependent variable.  It performs the following:
+INIT-NONLIN-COLUMN-FIT performs initializations necessary to call GSLL's
+non-linear fitting functions on the data of the dependent variable.
+It performs the following:
+
 - Initializes and stores values in the column schema
 - builds & compiles functions that GSLL will use to run the non-linear
-fitting function.  Stores the functions in the column schema.
+  fitting function.  Stores the functions in the column schema.
 
 Consult the non-lin-ls-sq-column-schema class documentation to see
-which slots are populated by INIT-COLUMN-FIT.
+which slots are populated by INIT-NONLIN-COLUMN-FIT.
 
 Example:
 
- (init-column-fit 'y-var 'x-var some-table #'some-fun #'some-other-fun 3)
+ (init-nonlin-column-fit 'y-var 'x-var some-table #'some-fun #'some-other-fun 3)
 
 "
-  (let ((y-schema (find-column-schema y-name column-table))
-	(x-schema (find-column-schema x-name column-table))
-	sigma-schema)
-    (assert (typep y-schema 'non-lin-ls-sq-column-schema) ()
-	    "Column-name: ~a, must refer to a non-lin-ls-sq-column-schema"
-	    y-name)
-    (assert (typep x-schema 'foreign-column-schema) ()
-	    "Column-name: ~a, must refer to a foreign-column-schema"
-	    x-name)
-    (when (symbolp sigma-name-or-val)
-      (setf sigma-schema (find-column-schema sigma-name-or-val column-table))
-      (assert (typep sigma-schema 'foreign-column-schema) ()
-	      "Column-name: ~a, must refer to a foreign-column-schema"
-	      sigma-name-or-val))
+  (let* ((y-name (column-name y-schema))
+	 (x-name (independent-var y-schema))
+	 ;;(x-schema (find-column-schema x-name table))
+	 (sigma-def (sigma y-schema)))
+    (when (symbolp sigma-def)
+      (let ((sigma-schema (find-column-schema sigma-def table)))
+	(assert (foreign-column-suptypep sigma-schema) ()
+		"Column-name: ~a, must refer to a foreign-column-schema"
+		sigma-def)))
     (setf (fit-fun y-schema) fit-fun
 	  (fit-fun-jacobian y-schema) fit-fun-jacobian
 	  (independent-var y-schema) x-name
 	  (n-coeffs y-schema) n-coeffs)
-    (let ((y (table-column y-name column-table))
-	  (x (table-column x-name column-table))
-	  (sigma (if (symbolp sigma-name-or-val)
-		     (table-column sigma-name-or-val column-table)
-		     sigma-name-or-val))
+    (let ((y (table-column y-name table))
+	  (x (table-column x-name table))
+	  (sigma (if (symbolp sigma-def)
+		     (table-column sigma-def table)
+		     sigma-def))
 	  ;; the following two will be passed to GSLL
 	  (load-residuals-fun (gensym "LOAD-RESIDUALS-FUN"))
 	  (load-jacobian-fun (gensym "LOAD-JACOBIAN-FUN")))
@@ -179,12 +125,12 @@ Destructively modifies RESIDUALS with new values.
 This is the first of the three functions that are arguments to gsll's
 make-nonlinear-fdffit.
 
-This function is created on-the-fly by INIT-COLUMN-FIT using the
+This function is created on-the-fly by INIT-NONLIN-COLUMN-FIT using the
 provided fit-functions and other data.
 
 FIT-FUN, X, and Y are provided via a closure.
 "
-		  (dotimes (i (row-count column-table))
+		  (dotimes (i (row-count table))
 		    (setf (grid:aref residuals i)
 			  (/ (- (funcall fit-fun (grid:aref x i) coeffs)
 				(grid:aref y i))
@@ -211,12 +157,12 @@ Destructively modifies RESIDUALS with new values.
 This is the first of the three functions that are arguments to gsll's
 make-nonlinear-fdffit.
 
-This function is created on-the-fly by INIT-COLUMN-FIT using the
+This function is created on-the-fly by INIT-NONLIN-COLUMN-FIT using the
 provided fit-functions and other data.
 
 FIT-FUN, X, and Y are provided via a closure.
 "
-		  (dotimes (i (row-count column-table))
+		  (dotimes (i (row-count table))
 		    (setf (grid:aref residuals i)
 			  (/ (- (funcall fit-fun (grid:aref x i) coeffs)
 				(grid:aref y i))
@@ -248,13 +194,13 @@ Destructively modifies JACOBIAN with new values.
 This is the second of the three functions that are arguments to gsll's
 make-nonlinear-fdffit.
 
-This function is created on-the-fly by INIT-COLUMN-FIT using the
+This function is created on-the-fly by INIT-NONLIN-COLUMN-FIT using the
 provided fit-fun-jacobian and other data.
 
 FIT-FUN-JACOBIAN, X and a few other variables are provided via a
 closure.
 "
-	      (dotimes (i (row-count column-table))
+	      (dotimes (i (row-count table))
 		(let ((jacobian-column (funcall fit-fun-jacobian (grid:aref x i)
 						coeffs)))
 		  (loop :for j :below n-coeffs
@@ -285,7 +231,7 @@ Calls other functions to calculate RESIDUALS and JACOBIAN for each X.  Destructi
 This is the third of the three functions that are arguments to gsll's
 make-nonlinear-fdffit.  It calls the first two of the set.
 
-This function is created on-the-fly by INIT-COLUMN-FIT using the
+This function is created on-the-fly by INIT-NONLIN-COLUMN-FIT using the
 provided fit-functions and other data.
 "
 	      (funcall f-residual coeffs residuals)
@@ -296,12 +242,16 @@ provided fit-functions and other data.
 (defparameter *b* 1.5d0)
 (defparameter *a* 1.1d0)
 
-(defun y (x coeffs)
+(defun a*e^/bx/ (x coeffs)
+  "Function a exp(-bx)
+
+Coeffs is a two element array: #[a b]"
   (let ((a (grid:aref coeffs 0))
 	(b (grid:aref coeffs 1)))
     (* a (exp (- (* b x))))))
 
-(defun dy/d-coeffs (x coeffs)
+(defun a*e^/bx/-jacobian (x coeffs)
+  "Jacobian of y with respect to a and b"
   (let* ((a (grid:aref coeffs 0))
 	 (b (grid:aref coeffs 1))
 	 (e (exp (- (* b x)))))
@@ -312,68 +262,86 @@ provided fit-functions and other data.
   (grid:make-grid '((grid:foreign-array 4) double-float)
 		    :initial-contents
 		    (loop for i below 4
-		       collect (float i 1d0))))
+		       collect (float i 1d0)))
+  "Test values of x")
 (defparameter *y_i*
   (let ((coeffs (make-array 2 :initial-contents (list *a* *b*))))
     (grid:make-grid '((grid:foreign-array 4) double-float)
 		    :initial-contents
 		    (loop for i below 4
-		       collect (float (y i
+		       collect (float (a*e^/bx/ i
 					 coeffs) 1d0))))
   "Fit data corresponsing to coefficients *a* and *b*")
 
 
 
 
-(define-test init-column-fit
-  "This test exercises INIT-COLUMN-FIT, and the functions that it creates."
+(define-test init-nonlin-column-fit
+  "This test exercises INIT-NONLIN-COLUMN-FIT, and the functions that
+it creates.
+
+We use the functions y and dy/d-coeffs.  We test that the functions
+stored in the column schema calculate the residual and the jacobian
+correctly."
   (let ((table (make-table 'column-major-table
 			   (make-table-schema 'column-major-table
-					      '((x-col foreign-double-float)
-						(y-col non-lin-ls-sq-column-schema))))))
-    (set-table-column table 0 *x_i*)
-    (set-table-column table 1 *y_i*)
-    (init-column-fit 'y-col 'x-col 1d0 table
-		     #'y #'dy/d-coeffs 2)
+					      '((x-col foreign-column)
+						(y-col nonlinear-ls-sq-column))))))
+    (set-nth-column 0 table *x_i*)
+    (set-nth-column 1 table *y_i*)
+    (set-independent-var table 'y-col 'x-col)
+    (let ((y-schema (find-column-schema 'y-col table)))
+      (setf (sigma y-schema) 1d0)
+      (init-nonlin-column-fit y-schema table
+			      #'a*e^/bx/ #'a*e^/bx/-jacobian 2))
     (let* ((schema (find-column-schema 'y-col table))
 	   (coeffs (make-array 2 :initial-contents (list (+ *a* *a*) *b*)))
-	   (residuals (grid:make-grid '((grid:foreign-array 4) double-float)))
-	   (residuals-fun (slot-value schema 'load-residuals-fun)))
-      (funcall residuals-fun coeffs residuals)
+	   (residuals
+	    (let ((grid (grid:make-grid '((grid:foreign-array 4) double-float)))
+		  (residuals-fun (slot-value schema 'load-residuals-fun)))
+	      (funcall residuals-fun coeffs grid)
+	      grid)))
       (assert-numerical-equal *y_i* residuals "Residual=y when we double amplitude"))
     (let* ((schema (find-column-schema 'y-col table))
 	   (coeffs (make-array 2 :initial-contents (list *a* *b*)))
-	   (residuals (grid:make-grid '((grid:foreign-array 4) double-float)))
-	   (residuals-fun (slot-value schema 'load-residuals-fun)))
-      (funcall residuals-fun coeffs residuals)
+	   (residuals
+	    (let ((grid (grid:make-grid '((grid:foreign-array 4) double-float)))
+		  (residuals-fun (slot-value schema 'load-residuals-fun)))
+	      (funcall residuals-fun coeffs grid)
+	      grid)))
       (assert-numerical-equal (grid:make-grid '((grid:foreign-array 4) double-float)
 					      :initial-element 0d0)
 			      residuals "Residuals=0 when coeffs are exact"))
     (let* ((schema (find-column-schema 'y-col table))
 	   (coeffs (make-array 2 :initial-contents (list *a* *b*)))
-	   (jacobian (grid:make-grid '((grid:foreign-array 4 2) double-float)))
-	   (jacobian-fun (slot-value schema 'load-jacobian-fun)))
-      (funcall jacobian-fun coeffs jacobian)
+	   (jacobian
+	    (let ((grid (grid:make-grid '((grid:foreign-array 4 2) double-float)))
+		  (jacobian-fun (slot-value schema 'load-jacobian-fun)))
+	      (funcall jacobian-fun coeffs grid)
+	      grid)))
       (assert-numerical-equal
        (grid:make-grid '((grid:foreign-array 4) double-float)
 		       :initial-contents
 		       (loop for x below 4
-			  collect (- (exp (- (* *b* x))))))
-       (grid:column jacobian 0) "Jacobian column 0")
+			  collect (exp (- (* *b* x)))))
+       (grid:column jacobian 0) "Jacobian column 0 must match the first value
+returned by dy/d-coeffs")
       (assert-numerical-equal
        (grid:make-grid '((grid:foreign-array 4) double-float)
 		       :initial-contents
 		       (loop for x below 4
-			  collect (* *a* x (exp (- (* *b* x))))))
-       (grid:column jacobian 1) "Jacobian column 1"))))
+			  collect (- (* *a* x (exp (- (* *b* x)))))))
+       (grid:column jacobian 1) "Jacobian column 1 must match the
+second value returned by dy/d-coeffs"))))
 
 
 (defun norm-f (fit)
   "Find the norm of the fit function f."
   (gsll:euclidean-norm (gsll:function-value fit)))
 
-(defmethod fit-column ((table column-major-table) y-name coeffs-guess
-		       &optional print-steps (max-steps 25))
+(defmethod fit-column ((table column-major-table)
+		       (y-schema non-lin-ls-sq-column-schema)
+		       &key coeffs-guess print-steps (max-steps 25))
   "Fits column data to function specified in column schema
 
 Syntax:
@@ -395,13 +363,12 @@ object.  The parameters of NONLINEAR-FDFFIT and the fitting method are
 obtained from the column schema.
 
 This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
-  (let* ((column-schema (find-column-schema y-name table))
-	 (n-coeffs (n-coeffs column-schema))
+  (let* ((n-coeffs (n-coeffs y-schema))
 	 (n-data (row-count table))
-	 (method (fit-method column-schema))
-	 (residuals-fun (slot-value column-schema 'load-residuals-fun))
-	 (jacobian-fun (slot-value column-schema 'load-jacobian-fun))
-	 (residuals+jacobian-fun (slot-value column-schema 'residual+jacobian-fun))
+	 (method (fit-method y-schema))
+	 (residuals-fun (slot-value y-schema 'load-residuals-fun))
+	 (jacobian-fun (slot-value y-schema 'load-jacobian-fun))
+	 (residuals+jacobian-fun (slot-value y-schema 'residual+jacobian-fun))
 	 covariance
 	 (fit (gsll:make-nonlinear-fdffit
 	       method
@@ -439,33 +406,40 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
 			collect (fitx i))))))))
 
 
-(define-test init-column-fit
-  ""
+(define-test nonlinear-column-fit
+  "Test nonlinear column fit"
   (let ((table (make-table 'column-major-table
 			   (make-table-schema 'column-major-table
-					      '((x-col foreign-double-float)
-						(y-col non-lin-ls-sq-column-schema))))))
-    (set-table-column table 0 *x_i*)
-    (set-table-column table 1 *y_i*)
-    (init-column-fit 'y-col 'x-col 1d0 table
-		     #'y #'dy/d-coeffs 2)
+					      '((x-col foreign-column)
+						(y-col nonlinear-ls-sq-column))))))
+    (set-nth-column 0 table *x_i*)
+    (set-nth-column 1 table *y_i*)
+    (set-independent-var table 'y-col 'x-col)
+    (let ((y-schema (find-column-schema 'y-col table)))
+      (setf (sigma y-schema) 1d0)
+      (init-nonlin-column-fit y-schema table
+			      #'a*e^/bx/ #'a*e^/bx/-jacobian 2))
     (let ((lisp-unit:*epsilon* 1e-9))
-      (assert-numerical-equal '(1.1 1.5)
-			    (fit-column table 'y-col
-					(grid:make-grid '((grid:foreign-array 2) double-float)
-							:initial-contents (list 2d0 1d0)))))))
+      (assert-numerical-equal
+       '(1.1 1.5)
+       (fit-column table 'y-col
+		   :coeffs-guess
+		   (grid:make-foreign-array
+		    'double-float
+		    :dimensions 2
+		    :initial-contents (list 2d0 1d0)))))))
 
 
-(defun exp-y (x coeffs)
+(defun b+a*e^/-cx/ (x coeffs)
   (let ((a (grid:aref coeffs 0))
-	(lambda (grid:aref coeffs 1))
+	(c (grid:aref coeffs 1))
 	(b (grid:aref coeffs 2)))
-    (+ (* A (exp (* (- lambda) x))) b)))
+    (+ (* A (exp (* (- c) x))) b)))
 
-(defun exp-dy/d-coeffs (x coeffs)
+(defun b+a*e^/-cx/-jacobian (x coeffs)
   (let* ((a (grid:aref coeffs 0))
-	 (lambda (grid:aref coeffs 1))
-	 (e (exp (- (* lambda x)))))
+	 (c (grid:aref coeffs 1))
+	 (e (exp (- (* c x)))))
     (list e
 	  (* -1 x a e)
 	  1d0)))
@@ -475,22 +449,27 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
   ""
   (let ((table (make-table 'column-major-table
 			   (make-table-schema 'column-major-table
-					      '((x-col foreign-double-float)
-						(y-col non-lin-ls-sq-column-schema)))))
+					      '((x-col foreign-column)
+						(y-col nonlinear-ls-sq-column)))))
 	(data (gsll::generate-nlls-data)))
-    (set-table-column table 0 
-		      (grid:make-grid '((grid:foreign-array 40) double-float)
-				      :initial-contents
-				      (loop for i below 40
-					   collect i)))
-    (set-table-column table 1 (gsll::exponent-fit-data-y data))
-    (init-column-fit 'y-col 'x-col 1d0 table
-		     #'exp-y #'exp-dy/d-coeffs 3)
+    (set-nth-column 0 table 
+		    (grid:make-foreign-array 'double-float
+					     :dimensions 40
+					     :initial-contents
+					     (loop for i below 40
+						collect i)))
+    (set-nth-column 1 table (gsll::exponent-fit-data-y data))
+    (set-independent-var table 'y-col 'x-col)
+    (let ((y-schema (find-column-schema 'y-col table)))
+      (setf (sigma y-schema) 1d0)
+      (init-nonlin-column-fit y-schema table
+			      #'b+a*e^/-cx/ #'b+a*e^/-cx/-jacobian 3))
     (let ((lisp-unit:*epsilon* 1e-1))
       (assert-numerical-equal '(5 0.1 1)
-			    (fit-column table 'y-col
-					(grid:make-grid '((grid:foreign-array 3) double-float)
-							:initial-contents (list 2 1 1)))))))
+			      (fit-column table 'y-col
+					  :coeffs-guess
+					  (grid:make-grid '((grid:foreign-array 3) double-float)
+							  :initial-contents (list 2 1 1)))))))
 
 (defun |sigma| (c n)
   (/ (- 1 (expt c (+ 1 n)))

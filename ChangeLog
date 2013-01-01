@@ -1,4 +1,96 @@
+2013-01-01  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/table-building.lisp (loaded-test-table):
+	Changed call to set-table-column to set-nth-column
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp
+	(init-nonlin-column-fit): Using sent-nth-column function instead
+	of set-table-column
+
+	* column-major-table/interpolated-column.lisp
+	(init-column-interp): Using sent-nth-column function instead of
+	set-table-column
+
+	* column-major-table/table-building.lisp (set-nth-column): Added
+	unit tests
+	(set-table-column): Added method specializing on column-name
+	(set-table-column): Fixed test to conform to new calling convention
+
+2012-12-30  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/foreign-column.lisp (set-table-column):
+	Removed from foreign-column file.  I re-designed the methods so
+	that the most generic array access method will do the job with a
+	help of a few before methods
+
+	* column-major-table/table-building.lisp (set-table-column):
+	Adapted argument list to generic function.  I had changed the
+	argument order
+	(set-nth-column): Added new methodmethod
+	(set-table-column): Re-wrote body to use set-nth-column
+
+
 2012-12-29  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/foreign-column.lisp (set-table-column): Bug:
+	-- I was using slot `table' instead of `table-data'
+
+	* column-major-table/table-building.lisp (set-table-column): Bug
+	-- I was using slot `table' instead of `table-data'
+
+	* column-major-table/linear-least-squares-fit-column.lisp
+	(fit-column): Added &key to lambda-list
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp: 
+	(make-column-schema): Removed method as it is not necessary with
+	new column-schema classes
+	(fit-column): Changed lambda list to be congruent with fit-column
+	generic function
+
+	* column-major-table/interpolated-column.lisp: Removed
+	initialization code, which became un-necessary with the new class
+	structure for column-schema
+
+	* numeric-table.asd (#:numeric-table): Updated to new files
+
+	* column-major-table/linear-least-squares-fit-column.lisp
+	(ax-least-squares-column-schema)
+	(ax+b-least-squares-column-schema): New class for linear fitting,
+	replacing linear-least-squares-column-schema
+	(fit-column): Methods for ax+b and ax linear fitting columns
+	(fit-estimate): Methods for calculating estimates for ax+b and ax
+	linear column fits
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp
+	(non-lin-ls-sq-column-schema): Added dependency on column-fit
+	class
+	(non-lin-ls-sq-column-schema): Moved independent-var and sigma
+	slots to column-fit
+
+	* column-major-table/column-fitting.lisp (column-fit): New file
+	and new base class for column fits.  I import slots from
+	non-linear and linear fitting files
+	(linear-column-fit, nonlinear-column-fit): New classes for linear
+	and nonlinear fits
+	(fit-column, fit-estimate): generic functions for performing fits
+	and evaluating the estimates
+
+	* column-major-table/foreign-column.lisp (foreign-column-schema):
+	Changed inheritance to number-column-schema, and added short-name
+	definition
+	(make-column-schema): Removed the method as this is handled by the
+	function
+	(initialize-instance): Removed method for foreign-column that sets
+	value-normalizer to check for correct number type (double float)
+
+	* init/generic-numeric-table.lisp (make-column-schema): Replaced by a function that instantiates an appropriate class
+	(column-schema): Updated documentation and fixed slots to its new
+	role as a virtual class
+	(string-column-schema, number-column-schema)
+	(symbol-column-schema): New classes
+	(*valid-column-schema*, add-column-schema-short+long-names)
+	(column-schema-long-name): New code that handles short names for
+	column schema and corresponding class names
 
 	* numeric-table-user.asd (#:numeric-table-user): Changed email,
 	added MIT license, added version number.
