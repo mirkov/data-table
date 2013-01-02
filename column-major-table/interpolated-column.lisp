@@ -2,7 +2,7 @@
 
 (export '(interpolation-data independent-var init-column-interp interp-column))
 
-(defclass interpolated-column-schema (foreign-column-schema)
+(defclass interpolated-column-schema (foreign-double-schema)
   ((interpolation-data
     :accessor interpolation-data
     :initform nil
@@ -81,7 +81,7 @@ polynomical."
 				      :initial-contents (second values))))
       (let ((table (make-table 'column-major-table
 			       (make-table-schema 'column-major-table
-						  '((x-col foreign-column)
+						  '((x-col foreign-double)
 						    (y-col interpolated-column))))))
 	(set-nth-column 0 table x)
 	(set-nth-column 1 table y)

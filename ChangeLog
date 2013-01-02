@@ -1,4 +1,27 @@
+2013-01-02  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* init/utilities.lisp (init-vv-array, vvref, set-vvref)
+	(vv-table-equal): Changed cl:aref to grid:aref.
+
+	* column-major-table/table-building.lisp (normalize-vector):
+	Modified to explicity specify the output vector (element type and
+	array storage)
+
+	* column-major-table/foreign-column.lisp (foreign-double-schema):
+	Added new class to capture double floats stored as foreign vectors
+
 2013-01-01  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/table-queries.lisp (restrict-rows)
+	(distinct-rows, sorted-rows): Changed row collection algorithm.
+	Prior algorithm was building the new table row-by-row using
+	adjustable vectors.  New algorithm collects the row indices, then
+	initializes the vectors and fills them up
+	(shuffle-rows): New function that facilitiates the new algorithm
+	in restrict-rows, distinct-rows, sorted-rows
+	(:numeric-table): Modified selection functions to call function
+	make-vector that specializes on column schema.  make-vector will
+	then create a CL array or a foreign-array, depending on the schema
 
 	* column-major-table/table-building.lisp (loaded-test-table):
 	Changed call to set-table-column to set-nth-column

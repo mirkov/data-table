@@ -40,52 +40,66 @@ EXTRACTOR is used when we want to return a sub-set of the table's columns")
   (loop :for c in column-names
      :collect (find-column-schema c schema)))
 
-(defmethod restrict-rows (data (where function))
+
+(defun pick-rows (old-data row-index table-schema)
+  "Create a new column-major-table data structure.  Fill it with rows
+specified by row-index"
+  (let* ((row-count (length row-index))
+	 (col-count (length old-data))
+	 (new-data (make-array col-count)))
+    (dotimes (j col-count)
+      (setf (aref new-data j)
+	    (make-vector row-count (nth j table-schema)))
+      (loop :for old-index :in row-index
+	 :for new-index :upfrom 0
+	 :do (setf (vvref new-data new-index j)
+		   (vvref old-data old-index j))))
+    new-data))
+
+(defmethod restrict-rows (data (where function) table-schema)
   "Return a new data table whose rows satisfy the WHERE function
 
 WHERE is a function of one argument: the table row index"
-  (let* ((column-count (length data))
-	 (row-count (length (aref data 0)))
-	 (new-data (init-vv-array column-count))
-	 (i-row 0))
-    (dotimes (i row-count)
-      (when (funcall where i)
-	(dotimes (j column-count)
-	  (vector-push-extend (vvref data i j)
-			      (aref new-data j)))
-	(incf i-row)))
-    (dotimes (i column-count)
-      (adjust-array (aref new-data i) i-row))
-    new-data))
+  (let* ((row-count (length (aref data 0))))
+    (let ((indices 
+	   (loop :for i below row-count
+	      :when (funcall where i)
+	      :collect i)))
+      (pick-rows data indices table-schema))))
 
 (define-test restrict-rows-1
   "Test row restriction by selecting every even row"
-  (let ((table (table-data (loaded-test-table))))
-    (let ((col-count (length table))
-	  (row-count (length (aref table 0)))
-	  (new-table
-	   (restrict-rows table (lambda (i)
-				  (evenp i))))
+  (let* ((table (loaded-test-table))
+	 (table-data (table-data table)))
+    (let ((col-count (column-count table))
+	  (row-count (row-count table))
+	  (new-table-data
+	   (restrict-rows table-data (lambda (i)
+				  (evenp i))
+			  (table-schema table)))
 	  (target-rows '(0 2 4 6 8)))
-    (assert-equal col-count (length new-table))
-    (assert-equal (/ row-count 2)
-		  (length (aref new-table 0)))
-    (assert-true
-     (vv-table-equal table new-table :target-rows target-rows)))))
+      (assert-equal col-count (length new-table-data) "column count")
+      (assert-equal (/ row-count 2)
+		    (length (aref new-table-data 0)) "row count")
+      (assert-true
+       (vv-table-equal table-data new-table-data :target-rows target-rows)
+       "table content"))))
 
 (define-test restrict-rows-2
   "Test row restriction by selecting every row whose third column contains 1.4"
-  (let ((table (table-data (loaded-test-table)))
-	(target-rows '(0 3 5 7)))
-    (let ((col-count (length table))
-	  (row-count (length (aref table 0)))
-	  (new-table
-	   (restrict-rows table (lambda (i)
-				  (equal 1.4 (vvref table i 2))))))
-      (assert-equal col-count (length new-table))
-      (assert-equal 4 (length (aref new-table 0)))
+  (let* ((table (loaded-test-table))
+	 (table-data (table-data table))
+	 (target-rows '(0 3 5 7)))
+    (let ((col-count (column-count table))
+	  (row-count (row-count table))
+	  (new-table-data
+	   (restrict-rows table-data (lambda (i)
+				  (equal 1.4 (vvref table-data i 2)))
+			  (table-schema table))))
+      (assert-equal col-count (length new-table-data))
+      (assert-equal 4 (length (aref new-table-data 0)))
       (assert-true
-       (vv-table-equal table new-table :target-rows target-rows)))))
+       (vv-table-equal table-data new-table-data :target-rows target-rows)))))
 
 (defmethod project-columns (table-schema old-data (schema cons))
   "Return a new data-table that contains columns specified by SCHEMA"
@@ -151,28 +165,22 @@ Thus rows 0 and 3 are duplicates
 (defun distinct-rows (data column-names table-schema)
   "Remove duplicate rows from data
 
-Remove rows from DATA that are duplicaes in columns identified by
+Remove rows from DATA that are duplicates in columns identified by
 COLUMN-NAMES
 
 TABLE-SCHEMA contains DATA's column names and equality testers.
 
 DATA and SCHEMA must be congruent.  This has to be insured by the
 caller routine"
-  (let ((row-count (length (aref data 0)))
-	(col-count (length data)))
-    (let ((row-index
+  (let ((row-count (length (aref data 0))))
+    (let ((distinct-row-indices
 	   (loop :for i below row-count
-	      :collect i))
-	  (new-data (init-vv-array col-count)))
-      (setf row-index
-	    (delete-duplicates row-index
+	      :collect i)))
+      (setf distinct-row-indices
+	    (delete-duplicates distinct-row-indices
 			 :test (row-equality-tester/cmt
 				data column-names table-schema)))
-      (loop :for col across new-data
-	 :for j from 0
-	 :do (dolist (i row-index)
-	       (vector-push-extend (vvref data i j) col)))
-      new-data)))
+      (pick-rows data distinct-row-indices table-schema))))
 
 
 
@@ -238,20 +246,19 @@ The second three in PETAL-LENGTH and PETAL-WIDTH"
 
 (defun sorted-rows (data column-names table-schema)
   (let ((row-count (length (aref data 0)))
-	(col-count (length data)))
-    (let ((row-index
+	#+skip (col-count (length data)))
+    (let ((sorted-row-index
 	   (loop :for i below row-count
 	      :collect i))
-	  (new-data (init-vv-array col-count)))
-      (setf row-index
-	    (sort row-index
+	  #+skip (new-data (init-vv-array col-count)))
+      (setf sorted-row-index
+	    (sort sorted-row-index
 		  (row-comparator/cmt
 		   data column-names table-schema)))
-      (loop :for col across new-data
-	 :for j from 0
-	 :do (dolist (i row-index)
-	       (vector-push-extend (vvref data i j) col)))
-      new-data)))
+      (pick-rows data sorted-row-index table-schema))))
+
+
+
 
 (define-test sorted-rows
   "PETAL-LENGTH column has several values 1.4 an PETAL-WIDTH has
@@ -288,7 +295,7 @@ same as for PETAL-LENGTH"
 
     ;; First part of the code prunes the rows and columns via explicit tests
     (when where
-      (setf data (restrict-rows data where)))
+      (setf data (restrict-rows data where schema)))
 
     (unless (eql columns 't)
       (setf schema (extract-schema (mklist columns) old-schema))

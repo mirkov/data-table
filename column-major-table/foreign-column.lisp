@@ -9,14 +9,11 @@ appropriate for GSLL and other C and Fortran libraries"))
 
 (add-column-schema-short+long-names 'foreign-column 'foreign-column-schema)
 
-#+skip(defmethod initialize-instance :after ((self (eql 'foreign-column-schema)) &key)
-  (with-slots (value-normalizer default-type) self
-  (setf value-normalizer
-	#'(lambda (value column-schema)
-	    (declare (ignore column-schema))
-	    (assert (typep value default-type))
-	    (float value 1d0)))))
+(defclass foreign-double-schema (foreign-column-schema)
+  ((default-type :initform 'double-float))
+  (:documentation "Stores a vector of double float values as a foreign-array"))
 
+(add-column-schema-short+long-names 'foreign-double 'foreign-double-schema)
 
 (defun foreign-column-suptypep (schema)
   "Return true if SCHEMA type is a subtype of FOREIGN-COLUMN-SCHEMA"
@@ -24,13 +21,10 @@ appropriate for GSLL and other C and Fortran libraries"))
 	    'foreign-column-schema))
 
 
-(defmethod set-nth-column :around ((column-index integer)
-				   (table column-major-table)
-				   (column-vector grid:vector-double-float)
-				   &key (overwrite nil))
-  (declare (ignore overwrite))
+(defmethod normalize-vector :around (vector (column-schema foreign-column-schema))
   (let ((grid:*default-grid-type* 'grid:foreign-array))
     (call-next-method)))
+
 
 
 (defmethod set-nth-column :before ((column-index integer)
@@ -48,7 +42,7 @@ appropriate for GSLL and other C and Fortran libraries"))
   "Test dimesions of table that was build column-by-column"
   (let ((table (make-table 'column-major-table
 			   (make-table-schema 'column-major-table
-					      '((x number) (y foreign-column))))))
+					      '((x number) (y foreign-double))))))
     (dotimes (i-column 2)
       (set-nth-column i-column
 		      table

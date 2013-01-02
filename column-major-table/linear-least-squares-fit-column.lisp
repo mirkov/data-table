@@ -7,7 +7,7 @@
 	  covariance
 	  chi^2))
 
-(defclass ax+b-least-squares-column-schema (linear-column-fit foreign-column)
+(defclass ax+b-least-squares-column-schema (linear-column-fit foreign-double-column)
   ()
   (:documentation "Stores data for ax+b least squares fitting via GSLL
 
@@ -16,7 +16,7 @@ Also stores the fitting results: coefficients, covariance matrix, and chi^2"))
 (add-column-schema-short+long-names 'ax+b-ls-fit 'ax+b-least-squares-column-schema)
 
 
-(defclass ax-least-squares-column-schema (linear-column-fit foreign-column)
+(defclass ax-least-squares-column-schema (linear-column-fit foreign-double-column)
   ()
   (:documentation "Stores data for ax least squares fitting via GSLL
 

@@ -70,6 +70,16 @@ VECTOR is either a CL vector or a GRID vector")
   (:method ((vector vector))
     (length vector)))
 
+(defmethod make-vector (length (column-schema number-column-schema))
+  (make-array length :element-type 'number))
+
+(defmethod make-vector (length (column-schema string-column-schema))
+  (make-array length :element-type 'string))
+
+(defmethod make-vector (length (column-schema symbol-column-schema))
+  (make-array length :element-type 'symbol))
+
+
 (defmethod set-nth-column :before
     ((column-index integer)
      (column-table column-major-table)
@@ -95,7 +105,23 @@ VECTOR is either a CL vector or a GRID vector")
 	    "The new column length ~a does not match table row count ~a"
 	    (vector-length column-vector) row-count)))
 
-    
+(defgeneric normalize-vector (vector column-schema)
+  (:documentation
+   "Return a vector of properly normalized values
+
+Normalization is done using the value-normalizer specified in COLUMN-SCHEMA
+
+The vector storage method (native, or foreign) is also determined by
+the type of COLUMN-SCHEMA")
+  (:method (vector (column-schema column-schema))
+    (let ((value-normalizer (slot-value column-schema 'value-normalizer)))
+      (grid:map-grid :source vector
+		     :destination-specification
+		     (list (list grid:*default-grid-type* (vector-length vector))
+			   (default-type column-schema))
+		     :element-function (lambda (value)
+					 (funcall value-normalizer
+						  value column-schema))))))
 
 (defmethod set-nth-column ((column-index integer)
 			   (table column-major-table)
@@ -105,13 +131,8 @@ VECTOR is either a CL vector or a GRID vector")
   (with-slots (build-method table-data column-count row-count table-schema)
       table
     (setf (aref table-data column-index)
-	  (let* ((column-schema (nth-column-schema column-index
-						   table))
-		 (value-normalizer (slot-value column-schema 'value-normalizer)))
-	    (grid:map-grid :source vector
-			   :element-function (lambda (value)
-					       (funcall value-normalizer
-							value column-schema)))))))
+	  (normalize-vector vector (nth-column-schema column-index
+						   table)))))
 
 (define-test set-nth-column
   "Test dimesions of table that was build column-by-column"

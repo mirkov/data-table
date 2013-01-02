@@ -5,7 +5,7 @@
 	  init-nonlin-column-fit fit-column))
 
 
-(defclass non-lin-ls-sq-column-schema (nonlinear-column-fit foreign-column-schema)
+(defclass non-lin-ls-sq-column-schema (nonlinear-column-fit foreign-double-schema)
   (
    ;;; The following are private slots
    (residual+jacobian-fun
@@ -285,7 +285,7 @@ stored in the column schema calculate the residual and the jacobian
 correctly."
   (let ((table (make-table 'column-major-table
 			   (make-table-schema 'column-major-table
-					      '((x-col foreign-column)
+					      '((x-col foreign-double)
 						(y-col nonlinear-ls-sq-column))))))
     (set-nth-column 0 table *x_i*)
     (set-nth-column 1 table *y_i*)
@@ -410,7 +410,7 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
   "Test nonlinear column fit"
   (let ((table (make-table 'column-major-table
 			   (make-table-schema 'column-major-table
-					      '((x-col foreign-column)
+					      '((x-col foreign-double)
 						(y-col nonlinear-ls-sq-column))))))
     (set-nth-column 0 table *x_i*)
     (set-nth-column 1 table *y_i*)
@@ -449,7 +449,7 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
   ""
   (let ((table (make-table 'column-major-table
 			   (make-table-schema 'column-major-table
-					      '((x-col foreign-column)
+					      '((x-col foreign-double)
 						(y-col nonlinear-ls-sq-column)))))
 	(data (gsll::generate-nlls-data)))
     (set-nth-column 0 table 

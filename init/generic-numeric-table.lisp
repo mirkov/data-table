@@ -274,7 +274,7 @@ COLUMN-NAMES is a list of column names")
     (loop for c in column-names
        collect (find-column-schema c table-schema))))
 
-(defgeneric restrict-rows (table where)
+(defgeneric restrict-rows (table where column-schema)
   (:documentation "Return a new table whose rows satisfy WHERE.
 
 TABLE is the original table
