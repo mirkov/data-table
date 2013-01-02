@@ -60,7 +60,7 @@ specified by row-index"
   "Return a new data table whose rows satisfy the WHERE function
 
 WHERE is a function of one argument: the table row index"
-  (let* ((row-count (length (aref data 0))))
+  (let* ((row-count (vector-length (aref data 0))))
     (let ((indices 
 	   (loop :for i below row-count
 	      :when (funcall where i)
@@ -80,7 +80,7 @@ WHERE is a function of one argument: the table row index"
 	  (target-rows '(0 2 4 6 8)))
       (assert-equal col-count (length new-table-data) "column count")
       (assert-equal (/ row-count 2)
-		    (length (aref new-table-data 0)) "row count")
+		    (vector-length (aref new-table-data 0)) "row count")
       (assert-true
        (vv-table-equal table-data new-table-data :target-rows target-rows)
        "table content"))))
@@ -97,7 +97,7 @@ WHERE is a function of one argument: the table row index"
 				  (equal 1.4 (vvref table-data i 2)))
 			  (table-schema table))))
       (assert-equal col-count (length new-table-data))
-      (assert-equal 4 (length (aref new-table-data 0)))
+      (assert-equal 4 (vector-length (aref new-table-data 0)))
       (assert-true
        (vv-table-equal table-data new-table-data :target-rows target-rows)))))
 
@@ -172,7 +172,7 @@ TABLE-SCHEMA contains DATA's column names and equality testers.
 
 DATA and SCHEMA must be congruent.  This has to be insured by the
 caller routine"
-  (let ((row-count (length (aref data 0))))
+  (let ((row-count (vector-length (aref data 0))))
     (let ((distinct-row-indices
 	   (loop :for i below row-count
 	      :collect i)))
@@ -245,7 +245,7 @@ The second three in PETAL-LENGTH and PETAL-WIDTH"
       (assert-true (funcall row-comparator 0 5)))))
 
 (defun sorted-rows (data column-names table-schema)
-  (let ((row-count (length (aref data 0)))
+  (let ((row-count (vector-length (aref data 0)))
 	#+skip (col-count (length data)))
     (let ((sorted-row-index
 	   (loop :for i below row-count
@@ -298,8 +298,11 @@ same as for PETAL-LENGTH"
       (setf data (restrict-rows data where schema)))
 
     (unless (eql columns 't)
-      (setf schema (extract-schema (mklist columns) old-schema))
-      (setf data (project-columns old-schema data schema)))
+      (setf schema (extract-schema (mklist columns) old-schema)
+	    data (project-columns old-schema data schema))
+      (loop :for column-schema :in schema
+	 :for column-index :upfrom 0
+	 :do (setf (slot-value column-schema 'i-column) column-index)))
 
     ;; Next, if needed, we remove distinct rows
     (when distinct
@@ -316,7 +319,7 @@ same as for PETAL-LENGTH"
       (setf (slot-value new-table 'column-count)
 	    (length (table-data new-table))
 	    (slot-value new-table 'row-count)
-	    (length (aref (table-data new-table) 0))
+	    (vector-length (aref (table-data new-table) 0))
 	    (slot-value new-table 'build-method) 'select)
       new-table)))
 
@@ -338,8 +341,8 @@ We test on the new table dimensions and contents"
       (assert-number-equal 4 (row-count new-table))
       (assert-true
        (vv-table-equal data (table-data new-table)
-			  :target-rows target-rows
-			  :target-cols '(0 2))))
+		       :target-rows target-rows
+		       :target-cols '(0 2))))
     (let ((new-table
 	   (select table
 		   :columns '(petal-length petal-width)
@@ -349,8 +352,14 @@ We test on the new table dimensions and contents"
       (assert-number-equal 6 (row-count new-table))
       (assert-true
        (vv-table-equal data (table-data new-table)
-			  :target-rows target-rows
-			  :target-cols '(2 3))))
+		       :target-rows target-rows
+		       :target-cols '(2 3)))
+      (assert-number-equal 0
+			   (slot-value (find-column-schema 'petal-length new-table)
+				       'i-column))
+      (assert-number-equal 1
+			   (slot-value (find-column-schema 'petal-width new-table)
+				       'i-column)))
     (let ((new-table
 	   (select table
 		   :order-by 'petal-length))

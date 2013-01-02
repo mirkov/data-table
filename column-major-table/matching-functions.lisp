@@ -1,6 +1,6 @@
 (in-package :numeric-table)
 
-(export '(matching-rows empty-p))
+(export '(matching-rows empty-p not-empty-p))
 
 
 (defgeneric column-matcher (column-schema value-or-test table &optional predicate)
@@ -9,7 +9,7 @@
 function returns true if the ROW's column value matches VALUE or satisfies 
 FUNCTION returns T.
 ")
-  (:method ((column-schema column-schema) (value t) table &optional predicate)
+  (:method ((column-schema column-schema) value table &optional predicate)
     "Return a function of a single argument N-row, the row index.  This
 function returns true if the ROW's column value matches VALUE.
 
@@ -48,7 +48,16 @@ function returns true if the columns value equals the empty value"
       #'(lambda (N-row)
 	  (funcall predicate
 		   (vvref table-data N-row n-column)
-		   empty-value)))))
+		   empty-value))))
+  (:method ((column-schema column-schema) (test (eql 'not-empty-p)) table
+	    &optional predicate)
+    "Return a function of a single argument N-row, the row index.
+This function returns true if the columns value does not equal the
+empty value"
+    (declare (ignore dummy-arg))
+    (let ((predicate (column-matcher column-schema 'empty-p table predicate)))
+      #'(lambda (N-row)
+	  (not (funcall predicate N-row))))))
 
 (define-test column-schema-matcher
   (let* ((table (loaded-test-table))

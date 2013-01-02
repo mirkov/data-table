@@ -20,4 +20,4 @@
 	    :pathname #p"./user/example1/"
 	    :serial t
 	    :components
-	    ((:file "example1")))))
+	    ((:file "example-w-native-arrays")))))

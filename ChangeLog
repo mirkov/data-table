@@ -1,5 +1,22 @@
 2013-01-02  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
+	* column-major-table/table-queries.lisp (select): Bugfix.  I now
+	update the column-schema 'i-column slot after selecting the
+	columns
+
+	* column-major-table/table-building.lisp (setf nth-column)
+	(set-nth-column): Replaced set-nth-column with defmethod setf
+	nth-column
+
+	* init/generic-numeric-table.lisp (make-column-schema): Fixed bug
+	in setting value-normalizer
+
+	* column-major-table/matching-functions.lisp (column-matcher):
+	Added method with 'not-empty-p specializer.  This method is a
+	complement of empty-p
+
+	* COPYRIGHT: Fixed date and name
+
 	* init/utilities.lisp (init-vv-array, vvref, set-vvref)
 	(vv-table-equal): Changed cl:aref to grid:aref.
 

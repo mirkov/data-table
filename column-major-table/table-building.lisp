@@ -123,10 +123,10 @@ the type of COLUMN-SCHEMA")
 					 (funcall value-normalizer
 						  value column-schema))))))
 
-(defmethod set-nth-column ((column-index integer)
-			   (table column-major-table)
-			   vector
-			   &key (overwrite nil))
+(defmethod (setf nth-column) (vector
+			      (column-index integer)
+			      (table column-major-table)
+			      &key (overwrite nil))
   (declare (ignore overwrite))
   (with-slots (build-method table-data column-count row-count table-schema)
       table

@@ -1,6 +1,6 @@
 (in-package :numeric-table)
 
-(export '(foreign-double-float))
+(export '(foreign-double))
 
 (defclass foreign-column-schema (number-column-schema)
   ()
@@ -20,6 +20,9 @@ appropriate for GSLL and other C and Fortran libraries"))
   (subtypep (type-of schema)
 	    'foreign-column-schema))
 
+
+(defmethod make-vector (length (column-schema foreign-double-schema))
+  (grid:make-foreign-array 'double-float :dimensions  `(,length)))
 
 (defmethod normalize-vector :around (vector (column-schema foreign-column-schema))
   (let ((grid:*default-grid-type* 'grid:foreign-array))

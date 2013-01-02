@@ -214,7 +214,7 @@ sub-classes"))
 			:documentation documentation
 			:empty-value empty-value)))
     (awhen value-normalizer
-      (setf (value-normalizer column-schema) it))
+      (setf (slot-value column-schema 'value-normalizer) it))
     column-schema))
 
 
