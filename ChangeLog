@@ -1,3 +1,47 @@
+2013-01-03  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/interpolated-column.lisp (:numeric-table):
+	Revamped code and added linear and polynomial interpolation.  All
+	tests pass.
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp
+	(init-nonlin-column-fit): fixed calls to col-independent-var
+
+	* init/generic-numeric-table.lisp (set-table-column)
+	(set-nth-column): Removed definition of generic functions since I
+	am using (setf ...) methods
+
+	* column-major-table/table-building.lisp (setf table-column):
+	Renamed set-table-column to setf in this file
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp (gsl-fit)
+	(nonlinear-column-fit, init-nonlin-column-fit): Renamed
+	set-nth-column and set-independent-var to (setf nth-column) and
+	(setf independent-var)
+
+	* column-major-table/interpolated-column.lisp
+	(init-column-interp): Renamed set-nth-column
+
+	* column-major-table/foreign-column.lisp (setf nth-column)
+	(set-table-foreign-column): Renamed set-nth-column :
+
+	* column-major-table/table-building.lisp (set-nth-column): Fixed
+	test to use (setf (nth-column ...) ...)
+
+	* column-major-table/column-fitting.lisp (column-fit): Changed
+	class definition.  It now inherits from column-fit+interpolation
+	(setf independent-var): moved to fitting+interpolation.lisp
+
+	* column-major-table/interpolated-column.lisp
+	(interpolated-column-schema): Redefined to use the
+	column-fit+interpolation base class.
+
+	* column-major-table/fitting+interpolation.lisp
+	(column-fit+interpolation): New base class for
+	column-fit+interpolation
+	(evaluate): New generic function for evaluating column fit or
+	interpolation
+
 2013-01-02  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/linear-least-squares-fit-column.lisp

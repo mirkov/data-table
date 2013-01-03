@@ -82,7 +82,7 @@ Example:
 
 "
   (let* ((y-name (column-name y-schema))
-	 (x-name (independent-var y-schema))
+	 (x-name (col-independent-var y-schema))
 	 ;;(x-schema (find-column-schema x-name table))
 	 (sigma-def (sigma y-schema)))
     (when (symbolp sigma-def)
@@ -92,7 +92,7 @@ Example:
 		sigma-def)))
     (setf (fit-fun y-schema) fit-fun
 	  (fit-fun-jacobian y-schema) fit-fun-jacobian
-	  (independent-var y-schema) x-name
+	  (col-independent-var y-schema) x-name
 	  (n-coeffs y-schema) n-coeffs)
     (let ((y (table-column y-name table))
 	  (x (table-column x-name table))
@@ -287,9 +287,9 @@ correctly."
 			   (make-table-schema 'column-major-table
 					      '((x-col foreign-double)
 						(y-col nonlinear-ls-sq-column))))))
-    (set-nth-column 0 table *x_i*)
-    (set-nth-column 1 table *y_i*)
-    (set-independent-var table 'y-col 'x-col)
+    (setf (nth-column 0 table) *x_i*
+	  (nth-column 1 table) *y_i*
+	  (independent-var table 'y-col) 'x-col)
     (let ((y-schema (find-column-schema 'y-col table)))
       (setf (sigma y-schema) 1d0)
       (init-nonlin-column-fit y-schema table
@@ -412,9 +412,9 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
 			   (make-table-schema 'column-major-table
 					      '((x-col foreign-double)
 						(y-col nonlinear-ls-sq-column))))))
-    (set-nth-column 0 table *x_i*)
-    (set-nth-column 1 table *y_i*)
-    (set-independent-var table 'y-col 'x-col)
+    (setf (nth-column 0 table) *x_i*
+	  (nth-column 1 table) *y_i*
+	  (independent-var table 'y-col) 'x-col)
     (let ((y-schema (find-column-schema 'y-col table)))
       (setf (sigma y-schema) 1d0)
       (init-nonlin-column-fit y-schema table
@@ -452,14 +452,14 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
 					      '((x-col foreign-double)
 						(y-col nonlinear-ls-sq-column)))))
 	(data (gsll::generate-nlls-data)))
-    (set-nth-column 0 table 
-		    (grid:make-foreign-array 'double-float
-					     :dimensions 40
-					     :initial-contents
-					     (loop for i below 40
-						collect i)))
-    (set-nth-column 1 table (gsll::exponent-fit-data-y data))
-    (set-independent-var table 'y-col 'x-col)
+    (setf (nth-column 0 table)
+	  (grid:make-foreign-array 'double-float
+				   :dimensions 40
+				   :initial-contents
+				   (loop for i below 40
+				      collect i))
+	  (nth-column 1 table) (gsll::exponent-fit-data-y data)
+	  (independent-var table 'y-col) 'x-col)
     (let ((y-schema (find-column-schema 'y-col table)))
       (setf (sigma y-schema) 1d0)
       (init-nonlin-column-fit y-schema table

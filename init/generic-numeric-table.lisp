@@ -63,21 +63,21 @@ Methods may add additional keys"))
   (:documentation "Return the column data (not the column schema) from
   TABLE using column NAME"))
 
-(defgeneric set-table-column (column-name table column-vector
+
+#+skip(defgeneric set-table-column (column-name table column-vector
 				    &key overwrite
 				    &allow-other-keys)
   (:documentation 
 "Load COLUMN-VECTOR into TABLE column specified by COLUMN-NAME
 
 OVERWRITE, if T, allows an existing column to be overwritten"))
-
-(defsetf table-column set-table-column
+#+skip(defsetf table-column set-table-column
     "Set table column using SET-TABLE-COLUMN")
 
 (defgeneric nth-column (n table)
   (:documentation "Return the N-th column of TABLE"))
 
-(defgeneric set-nth-column (n table column-vector
+#+skip (defgeneric set-nth-column (n table column-vector
 			    &key overwrite
 			      &allow-other-keys)
   (:documentation"Load COLUMN-VECTOR into TABLE's N-th column.
@@ -144,6 +144,10 @@ size might not be meaningful"))
 This is a virtual class, not meant to be instantiated.  All of its
 slots are uninitialized.  They will be initialized by the
 sub-classes"))
+
+(defmethod describe-object ((self column-schema) stream)
+  (format stream "Column schema ~a:~%" (column-name self))
+  (format stream "It is stored in column ~a~%" (i-column self)))
 
 (defclass string-column-schema (column-schema)
   ((equality-predicate :reader equality-predicate

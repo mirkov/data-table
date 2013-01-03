@@ -2,13 +2,8 @@
 
 (export '(col-independent-var independent-var))
 
-(defclass column-fit ()
-  ((independent-var
-    :accessor col-independent-var
-    :initarg :independent-var
-    :initform nil
-    :documentation "Name of column with independent data")
-   (sigma
+(defclass column-fit (column-fit+interpolation)
+  ((sigma
     :accessor sigma
     :initarg sigma
     :initform 1d0
@@ -87,17 +82,3 @@ X-VALUE is a number")
     (fit-estimate table (find-column-schema column-name table) x-value)))
 
 
-(defgeneric (setf independent-var) (x-col table y-col)
-  (:documentation
-   "Set Y-COL's independent-variable to X-COL
-
-TABLE - a column major table
-Y-COL and X-COL are either names or schemas")
-  (:method ((x-col symbol) (table column-major-table) (y-col symbol))
-    (setf (col-independent-var (find-column-schema y-col table)) x-col))
-  (:method ((x-col symbol) (table column-major-table) (y-col column-schema))
-    (setf (col-independent-var y-col) x-col))
-  (:method ((x-col column-schema) (table column-major-table) (y-col symbol))
-    (setf (col-independent-var (find-column-schema y-col table)) (column-name x-col)))
-  (:method ((x-col column-schema) (table column-major-table) (y-col column-schema))
-    (setf (col-independent-var y-col) (column-name x-col))))

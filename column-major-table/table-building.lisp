@@ -54,8 +54,8 @@ If the table is bare, initialize it and specify the build method."
 (defun loaded-test-table ()
   (let ((table (test-column-table)))
     (dotimes (i-column 5)
-      (set-nth-column
-       i-column table
+      (setf (nth-column
+	    i-column table)
        (make-array
 	10
 	:initial-contents (loop :for i-row below 10
@@ -80,10 +80,10 @@ VECTOR is either a CL vector or a GRID vector")
   (make-array length :element-type 'symbol))
 
 
-(defmethod set-nth-column :before
-    ((column-index integer)
+(defmethod (setf nth-column) :before
+    (column-vector
+     (column-index integer)
      (column-table column-major-table)
-     column-vector
      &key (overwrite nil))
   (with-slots (build-method table-data column-count row-count table-schema)
       column-table
@@ -138,12 +138,11 @@ the type of COLUMN-SCHEMA")
   "Test dimesions of table that was build column-by-column"
   (let ((table (test-column-table)))
     (dotimes (i-column 5)
-      (set-nth-column
-       i-column table
-       (make-array
-	3
-	:initial-contents (loop :for i-row below 3
-			     :collect (aref *flower-data* i-row i-column)))))
+      (setf (nth-column i-column table)
+	    (make-array
+	     3
+	     :initial-contents (loop :for i-row below 3
+				  :collect (aref *flower-data* i-row i-column)))))
     (assert-equal 5 (column-count table))
     (assert-equal 3 (row-count table))
     (assert-number-equal 4.9 (vvref (table-data table) 0 0))
@@ -152,30 +151,30 @@ the type of COLUMN-SCHEMA")
     (assert-number-equal 1.3 (vvref (table-data table) 1 2))))
 
 
-(defmethod set-table-column ((column-name symbol)
-			     (table column-major-table)
-			     vector
+(defmethod (setf table-column) (vector
+				(column-name symbol)
+				(table column-major-table)
 			     &key (overwrite nil))
   (let ((column-index
 	 (position column-name (column-names table))))
-    (set-nth-column column-index table vector :overwrite overwrite)))
+    (setf (nth-column column-index table :overwrite overwrite) vector)))
 
-(defmethod set-table-column ((column-schema column-schema)
-			     (table column-major-table)
-			     vector
-			     &key (overwrite nil))
+(defmethod (setf table-column) (vector
+				(column-schema column-schema)
+				(table column-major-table)
+				&key (overwrite nil))
   (let ((column-index
 	 (position column-schema (table-schema table))))
-    (set-nth-column column-index table vector :overwrite overwrite)))
+    (setf (nth-column column-index table :overwrite overwrite) vector)))
 
 
-(define-test set-table-column
+(define-test setf-table-column
   "Test dimesions of table that was build column-by-column"
   (let* ((table (test-column-table))
 	 (column-names (column-names table)))
     (dolist (column-name column-names)
-      (set-table-column
-       column-name table
+      (setf (table-column
+	     column-name table)
        (make-array
 	3
 	:initial-contents (loop :for i-row below 3

@@ -30,9 +30,9 @@ appropriate for GSLL and other C and Fortran libraries"))
 
 
 
-(defmethod set-nth-column :before ((column-index integer)
-				   (table column-major-table)
-				   (column-vector grid:vector-double-float)
+(defmethod (setf nth-column) :before ((column-vector grid:vector-double-float)
+				      (column-index integer)
+				      (table column-major-table)
 				   &key (overwrite nil))
   (assert (foreign-column-suptypep (nth column-index
 					(table-schema table)))
@@ -47,8 +47,8 @@ appropriate for GSLL and other C and Fortran libraries"))
 			   (make-table-schema 'column-major-table
 					      '((x number) (y foreign-double))))))
     (dotimes (i-column 2)
-      (set-nth-column i-column
-		      table
+      (setf (nth-column i-column
+		       table)
        (make-array
 	3
 	:initial-contents (loop :for i-row below 3

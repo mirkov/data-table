@@ -1,5 +1,5 @@
 ;; Mirko Vukovic
-;; Time-stamp: <2012-12-15 22:48:13Eastern Standard Time column-major-table.lisp>
+;; Time-stamp: <2013-01-03 11:58:18Eastern Standard Time column-major-table.lisp>
 ;; 
 ;; Copyright 2011 Mirko Vukovic
 ;; Distributed under the terms of the GNU General Public License
@@ -96,29 +96,6 @@ name and column type"
 
 (define-test *test-table*
   (first (table-schema *test-table*)))
-
-
-
-#|
-(defmethod set-table-column ((table column-major-table)
-			     (column-index integer)
-			     (column-vector array)
-			     &key (overwrite nil))
-  (assert (< column-index (column-count table)) ()
-	  "Column index ~a is greater than number of columns ~a"
-	  column-index (column-count table))
-  (when
-   (and (not (null (aref (table table) column-index) ))
-	(not overwrite))
-   (error "Attempting to overwrite column ~a" column-index))
-  (if (row-count table)
-    (and (assert (= (length column-vector) (row-count table)) ()
-	    "The new column length ~a does not match table row count ~a"
-	    (length column-vector) (row-count table))
-	 (setf table-column (length column-vector)))
-    (setf (row-count table) (length column-vector)
-	  (aref (table table) column-index) column-vector)))
-|#
 
 
 ;;; Selection and value return functions modeled after PCL 392
