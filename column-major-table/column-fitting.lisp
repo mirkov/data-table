@@ -1,8 +1,10 @@
 (in-package :numeric-table)
 
+(export '(col-independent-var independent-var))
+
 (defclass column-fit ()
   ((independent-var
-    :accessor independent-var
+    :accessor col-independent-var
     :initarg :independent-var
     :initform nil
     :documentation "Name of column with independent data")
@@ -84,17 +86,18 @@ X-VALUE is a number")
   (:method ((table column-major-table) (column-name symbol) x-value)
     (fit-estimate table (find-column-schema column-name table) x-value)))
 
-(defgeneric set-independent-var (table y-col x-col)
+
+(defgeneric (setf independent-var) (x-col table y-col)
   (:documentation
    "Set Y-COL's independent-variable to X-COL
 
 TABLE - a column major table
 Y-COL and X-COL are either names or schemas")
-  (:method ((table column-major-table) (y-col symbol) (x-col symbol))
-    (setf (independent-var (find-column-schema y-col table)) x-col))
-  (:method ((table column-major-table) (y-col column-schema) (x-col symbol))
-    (setf (independent-var y-col) x-col))
-  (:method ((table column-major-table) (y-col symbol) (x-col column-schema))
-    (setf (independent-var (find-column-schema y-col table)) (column-name x-col)))
-  (:method ((table column-major-table) (y-col column-schema) (x-col column-schema))
-    (setf (independent-var y-col) (column-name x-col))))
+  (:method ((x-col symbol) (table column-major-table) (y-col symbol))
+    (setf (col-independent-var (find-column-schema y-col table)) x-col))
+  (:method ((x-col symbol) (table column-major-table) (y-col column-schema))
+    (setf (col-independent-var y-col) x-col))
+  (:method ((x-col column-schema) (table column-major-table) (y-col symbol))
+    (setf (col-independent-var (find-column-schema y-col table)) (column-name x-col)))
+  (:method ((x-col column-schema) (table column-major-table) (y-col column-schema))
+    (setf (col-independent-var y-col) (column-name x-col))))

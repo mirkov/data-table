@@ -1,5 +1,13 @@
 2013-01-02  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
+	* column-major-table/linear-least-squares-fit-column.lisp
+	(ax+b-least-squares-column-schema)
+	(ax-least-squares-column-schema): bug fix - they were inheriting
+	undefined classes
+	(fit-column): Removed code that ensures variables are foreign
+	arrays.  This should be ensured by table building procedure
+	(fit-column): Fixed call to col-independent-var
+
 	* column-major-table/table-queries.lisp (select): Bugfix.  I now
 	update the column-schema 'i-column slot after selecting the
 	columns

@@ -1,13 +1,13 @@
 (in-package :numeric-table)
 
-(export '(linear-least-squares-column-schema
+(export '(ax+b-ls-fit ax-ls-fit
 	  linear-fit linear-fit-estimate
 	  multiplier-fit multiplier-fit-estimate
 	  fit-coeffs
 	  covariance
 	  chi^2))
 
-(defclass ax+b-least-squares-column-schema (linear-column-fit foreign-double-column)
+(defclass ax+b-least-squares-column-schema (linear-column-fit foreign-double-schema)
   ()
   (:documentation "Stores data for ax+b least squares fitting via GSLL
 
@@ -16,7 +16,7 @@ Also stores the fitting results: coefficients, covariance matrix, and chi^2"))
 (add-column-schema-short+long-names 'ax+b-ls-fit 'ax+b-least-squares-column-schema)
 
 
-(defclass ax-least-squares-column-schema (linear-column-fit foreign-double-column)
+(defclass ax-least-squares-column-schema (linear-column-fit foreign-double-schema)
   ()
   (:documentation "Stores data for ax least squares fitting via GSLL
 
@@ -29,18 +29,12 @@ Also stores the fitting results: coefficients, covariance matrix, and chi^2"))
     ((table column-major-table) (y-schema ax+b-least-squares-column-schema)
      &key)
   (let ((y-name (column-name y-schema))
-	(x-name (independent-var y-schema))
+	(x-name (col-independent-var y-schema))
 	(w-spec (sigma y-schema)))
-    (let ((x (grid:copy (table-column x-name table)
-			:grid-type 'grid:foreign-array
-			:element-type 'double-float))
-	  (y (grid:copy (table-column y-name table)
-			:grid-type 'grid:foreign-array
-			:element-type 'double-float))
+    (let ((x (table-column x-name table))
+	  (y (table-column y-name table))
 	  (w (if (symbolp w-spec)
-		 (grid:copy (table-column w-spec table)
-			    :grid-type 'grid:foreign-array
-			    :element-type 'double-float)
+		 (table-column w-spec table)
 		 (grid:make-grid `((grid:foreign-array ,(row-count table))
 				   double-float)
 				 :initial-element 1d0))))
@@ -63,21 +57,15 @@ Also stores the fitting results: coefficients, covariance matrix, and chi^2"))
 			      c0 c1 cov00 cov01 cov11)))))
 
 (defmethod fit-column
-    ((table column-major-table) (y-schema ax+b-least-squares-column-schema)
+    ((table column-major-table) (y-schema ax-least-squares-column-schema)
      &key)
   (let ((y-name (column-name y-schema))
-	(x-name (independent-var y-schema))
+	(x-name (col-independent-var y-schema))
 	(w-spec (sigma y-schema)))
-    (let ((x (grid:copy (table-column x-name table)
-			:grid-type 'grid:foreign-array
-			:element-type 'double-float))
-	  (y (grid:copy (table-column y-name table)
-			:grid-type 'grid:foreign-array
-			:element-type 'double-float))
+    (let ((x (table-column x-name table))
+	  (y (table-column y-name table))
 	  (w (if (symbolp w-spec)
-		 (grid:copy (table-column w-spec table)
-			    :grid-type 'grid:foreign-array
-			    :element-type 'double-float)
+		 (table-column w-spec table) 
 		 (grid:make-grid `((grid:foreign-array ,(row-count table))
 				   double-float)
 				 :initial-element 1d0))))
@@ -89,7 +77,7 @@ Also stores the fitting results: coefficients, covariance matrix, and chi^2"))
 	      (slot-value y-schema 'independent-var) x-name)))))
 
 (defmethod fit-estimate ((table column-major-table)
-			 (y-schema ax+b-least-squares-column-schema)
+			 (y-schema ax-least-squares-column-schema)
 			 x-value)
   (let ((x-schema (find-column-schema (independent-var y-schema) table)))
     (gsll:multiplier-estimate
