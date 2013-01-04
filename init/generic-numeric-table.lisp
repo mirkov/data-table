@@ -188,11 +188,6 @@ sub-classes"))
   The short form, is used by users, and the long-form, that refers to
   the class name")
 
-(defun add-column-schema-short+long-names (short-name long-name)
-  (setf *valid-column-schema*
-	(remove short-name *valid-column-schema* :key #'car :test #'eq))
-  (push (cons short-name long-name) *valid-column-schema*))
-
 
 (progn
   (add-column-schema-short+long-names 'string 'string-column-schema)

@@ -5,7 +5,10 @@
 ;;; use slot-value.
 
 
-(export '(interpolation-data init-column-interp interp-column))
+(export '(init-column-interp interp-column
+	  linear-interpolation-column polynomial-interpolation-column
+	  cubic-spline-interpolation-column periodic-cubic-spline-interpolation-column
+	  akima-interpolation-column periodic-akima-interpolation-column))
 
 (defclass interpolated-column-schema (column-fit+interpolation
 				      foreign-double-schema)
@@ -27,53 +30,120 @@ the interpolation on subsequent calls"))
 The schema stores GSL's interpolation object, the name of the
 independent variable and the GSL accelerator"))
 
-(add-column-schema-short+long-names 'interpolated-column
-				    'interpolated-column-schema)
+(defclass gsll-interpolation (interpolated-column-schema)
+  ((gsll-interpolation-method
+    :accessor gsll-interpolation-method
+    :documentation "Stores the GSLL's constant spcifying the interpolation method"))
+  (:documentation "Base class for interpolation methods that use the GSLL engine"))
+
+(defclass gsll-spline-interpolation (gsll-interpolation)
+  ()
+  (:documentation "Base class for spline-type interpolation
+
+It is also used for Akima interpolation"))
+
+(defclass gsll-periodic-spline-interpolation (gsll-interpolation)
+  ()
+  (:documentation "Base class for periodic interpolation
+
+It may be used together with spline interpolations"))
+
+(defclass gsll-other-interpolation (gsll-interpolation)
+  ()
+  (:documentation "Base class for non-spline-type interpolation"))
+
+(defclass linear-interpolation-column-schema (gsll-other-interpolation)
+  ((method :initform 'linear-interpolation)
+   (gsll-interpolation-method
+    :initform gsll:+linear-interpolation+)))
+
+(defclass polynomial-interpolation-column-schema (gsll-other-interpolation)
+  ((method :initform 'polynomial-interpolation)
+   (gsll-interpolation-method
+    :initform gsll:+polynomial-interpolation+)))
+
+(defclass cubic-spline-interpolation-column-schema (gsll-spline-interpolation)
+  ((method :initform 'cubic-spline-interpolation)
+   (gsll-interpolation-method
+    :initform gsll:+cubic-spline-interpolation+)))
+
+(defclass periodic-cubic-spline-interpolation-column-schema
+    (cubic-spline-interpolation gsll-periodic-spline-interpolation)
+  ((method :initform 'periodic-cubic-spline-interpolation)
+   (gsll-interpolation-method
+    :initform gsll:+periodic-cubic-spline-interpolation+)))
+
+(defclass akima-interpolation-column-schema (gsll-spline-interpolation)
+  ((method :initform 'akima-interpolation)
+   (gsll-interpolation-method
+    :initform gsll:+akima-interpolation+)))
+
+(defclass periodic-akima-interpolation-column-schema
+    (akima-spline-interpolation gsll-periodic-spline-interpolation)
+  ((method :initform 'periodic-akima-interpolation)
+   (gsll-interpolation-method
+    :initform gsll:+periodic-akima-interpolation+)))
+
+
+
+(add-column-schema-short+long-names 'linear-interpolation-column
+				    'linear-interpolation-column-schema
+				    'polynomial-interpolation-column
+				    'polynomial-interpolation-column-schema
+				    'cubic-spline-interpolation-column
+				    'cubic-spline-interpolation-column-schema
+				    'periodic-cubic-spline-interpolation-column
+				    'periodic-cubic-spline-interpolation-column-schema
+				    'akima-interpolation-column
+				    'akima-interpolation-column-schema
+				    'periodic-akima-interpolation-column
+				    'periodic-akima-interpolation-column-schema)
+
 
 
 (defmethod describe-object :after ((self interpolated-column-schema) stream)
   (format stream "Interpolation method: ~a~%" (slot-value self 'method)))
 
-(defgeneric init-column-interp (table y-column method)
+(defgeneric init-column-interp (table y-column)
   (:documentation "Initialize column interpolation for TABLE's Y-COLUMN
 
 TABLE is a column major table
 Y-COLUMN is either a column name or a column schema
-X-VALUE is a number")
-  (:method ((table column-major-table) (column-name symbol) method)
-    (init-column-interp table (find-column-schema column-name table)
-			method)))
+X-VALUE is a number
+
+The interpolation method is determined based on the column schema
+which must be subtype of GSLL-SPLINE-INTERPOLATION or
+GSLL-OTHER-INTERPOLATION
+")
+  (:method ((table column-major-table) (column-name symbol))
+    (init-column-interp table (find-column-schema column-name table))))
 
 
 (defmethod init-column-interp :around ((column-table numeric-table)
-				       (y-schema interpolated-column-schema)
-				       method)
+				       (y-schema gsll-interpolation))
   (let* ((x-schema (find-column-schema
 		    (col-independent-var y-schema) column-table))
 	 (x-name (column-name x-schema)))
-    (setf (interpolation-method y-schema) method
-	  (col-independent-var y-schema) x-name
+    (setf (col-independent-var y-schema) x-name
 	  (acceleration y-schema) (gsll:make-acceleration))
     (call-next-method)))
 
 (defmethod init-column-interp ((column-table numeric-table)
-			       (y-schema interpolated-column-schema)
-			       (method (eql 'cubic-spline-interpolation)))
+			       (y-schema gsll-spline-interpolation))
   (let* ((x-schema (find-column-schema
 		    (col-independent-var y-schema) column-table))
 	 (x-name (column-name x-schema))
 	 (y-name (column-name y-schema))
 	 (table-schema (table-schema column-table)))
     (setf (interpolation-data y-schema)
-	  (gsll:make-spline gsll:+cubic-spline-interpolation+
+	  (gsll:make-spline (gsll-interpolation-method y-schema)
 			    (aref (table-data column-table)
 				  (position x-name table-schema :key #'column-name))
 			    (aref (table-data column-table)
 				  (position y-name table-schema :key #'column-name))))))
 
 (defmethod init-column-interp ((column-table numeric-table)
-			       (y-schema interpolated-column-schema)
-			       (method (eql 'linear-interpolation)))
+			       (y-schema gsll-other-interpolation))
   (let* ((x-schema (find-column-schema
 		    (col-independent-var y-schema) column-table))
 	 (x-name (column-name x-schema))
@@ -81,54 +151,45 @@ X-VALUE is a number")
 	 (table-schema (table-schema column-table)))
     (setf (interpolation-data y-schema)
 	  (gsll:make-interpolation
-	   gsll:+linear-interpolation+
+	   (gsll-interpolation-method y-schema)
 	   (aref (table-data column-table)
 		 (position x-name table-schema :key #'column-name))
 	   (aref (table-data column-table)
 		 (position y-name table-schema :key #'column-name))))))
 
-(defmethod init-column-interp ((column-table numeric-table)
-			       (y-schema interpolated-column-schema)
-			       (method (eql 'polynomial-interpolation)))
-  (let* ((x-schema (find-column-schema
-		    (col-independent-var y-schema) column-table))
-	 (x-name (column-name x-schema))
-	 (y-name (column-name y-schema))
-	 (table-schema (table-schema column-table)))
-    (setf (interpolation-data y-schema)
-	  (gsll:make-interpolation
-	   gsll:+polynomial-interpolation+
-	   (aref (table-data column-table)
-		 (position x-name table-schema :key #'column-name))
-	   (aref (table-data column-table)
-		 (position y-name table-schema :key #'column-name))))))
-  
+(defgeneric interp-column (column value table)
+  (:documentation
+"Interpolated a table column
 
-(defmethod interp-column (name value (column-table numeric-table))
-  (let* ((y-column-schema (find-column-schema name column-table))
-	 (y-index (i-column y-column-schema))
+The data comes from TABLE.  COLUMN identifies the column that is interpolated.
+
+It is either its name or its schema")
+  (:method ((name symbol) value table)
+    (let ((column-schema (find-column-schema name table)))
+      (interp-column column-schema value table))))
+
+(defmethod interp-column ((y-column-schema gsll-spline-interpolation) value
+			  (column-table numeric-table))
+  (gsll:evaluate (interpolation-data y-column-schema)
+		 value
+		 :acceleration
+		 (acceleration y-column-schema)))
+
+(defmethod interp-column ((y-column-schema gsll-other-interpolation)
+			  value
+			  (column-table numeric-table))
+  (let* ((y-index (i-column y-column-schema))
 	 (y-data (aref (table-data column-table) y-index))
 	 (x-name (col-independent-var y-column-schema))
 	 (x-column-schema (find-column-schema x-name column-table))
 	 (x-index (i-column x-column-schema))
 	 (x-data (aref (table-data column-table) x-index)))
-    ;; The syntax to gsll::evaluate depends on whether we use a spline
-    ;; or other interpolation methods.  This case statement could be
-    ;; circumvented by creating a class structure for the methods.
-    ;; However, this class structure will be tied to gsll.
-    (case (print (slot-value y-column-schema 'method))
-      (cubic-spline-interpolation
-       (gsll:evaluate (interpolation-data y-column-schema)
-		      value
-		      :acceleration
-		      (acceleration y-column-schema)))
-      (t
-       (gsll:evaluate (interpolation-data y-column-schema)
-		      value
-		      :xa x-data
-		      :ya y-data
-		      :acceleration
-		      (acceleration y-column-schema))))))
+    (gsll:evaluate (interpolation-data y-column-schema)
+		   value
+		   :xa x-data
+		   :ya y-data
+		   :acceleration
+		   (acceleration y-column-schema))))
 
 (define-test spline-column-interp
   "Test column interpolation on x vs x^2 where x is a vector of
@@ -149,11 +210,11 @@ polynomical."
       (let ((table (make-table 'column-major-table
 			       (make-table-schema 'column-major-table
 						  '((x-col foreign-double)
-						    (y-col interpolated-column))))))
+						    (y-col cubic-spline-interpolation-column))))))
 	(setf (nth-column 0 table) x
 	      (nth-column 1 table) y)
 	(setf (col-independent-var (find-column-schema 'y-col table)) 'x-col)
-	(init-column-interp table 'y-col 'cubic-spline-interpolation)
+	(init-column-interp table 'y-col)
 	(let ((*epsilon* 1e-4))
 	  (assert-number-equal (expt 5.2 2)
 			       (interp-column 'y-col 5.2 table)))))))
@@ -172,12 +233,12 @@ polynomical."
     (let ((table (make-table 'column-major-table
 			     (make-table-schema 'column-major-table
 						'((x-col foreign-double)
-						  (y-col interpolated-column))))))
+						  (y-col linear-interpolation-column))))))
       (setf (nth-column 0 table) x
 	    (nth-column 1 table) y)
       (setf (col-independent-var (find-column-schema 'y-col table)) 'x-col)
-      (init-column-interp table 'y-col 'linear-interpolation)
-      (describe-object (find-column-schema 'y-col table) t)
+      (init-column-interp table 'y-col)
+;;      (describe-object (find-column-schema 'y-col table) t)))
       (let ((*epsilon* 1e-4))
 	(assert-number-equal 1.5d0
 			     (interp-column 'y-col 1.5d0 table))
@@ -198,11 +259,11 @@ polynomical."
     (let ((table (make-table 'column-major-table
 			     (make-table-schema 'column-major-table
 						'((x-col foreign-double)
-						  (y-col interpolated-column))))))
+						  (y-col polynomial-interpolation-column))))))
       (setf (nth-column 0 table) x
 	    (nth-column 1 table) y)
       (setf (col-independent-var (find-column-schema 'y-col table)) 'x-col)
-      (init-column-interp table 'y-col 'polynomial-interpolation)
+      (init-column-interp table 'y-col)
       (let ((*epsilon* 1e-4))
 	(assert-number-equal 3.25d0
 			     (interp-column 'y-col 1.5d0 table))

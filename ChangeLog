@@ -1,6 +1,21 @@
 2013-01-03  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/interpolated-column.lisp (:numeric-table):
+	Reworked class structure.  Now each interpolation method has its
+	own class.  Its aspects are described by its super-classes.  This
+	allows me to simplify the initialization and interpolation
+	routines
+	(:numeric-table): Added classes for all of GSLL's interpolation
+	methods, and exporting those symbols
+
+	* init/utilities.lisp (add-column-schema-short+long-names):
+	Modified so that it accepts an arbitrary number of short/long
+	names. 
+
+	* init/generic-numeric-table.lisp
+	(add-column-schema-short+long-names): Moving to the utilities file
+
+	* column-major-table/interpolated-column.lisp (:numeric-table):
 	Revamped code and added linear and polynomial interpolation.  All
 	tests pass.
 

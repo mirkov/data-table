@@ -63,3 +63,16 @@ the i-th element of TARGET-ROWS."
   (:documentation 
 "Use LENGTH and COLUMN-SCHEMA and return a vector of correct length
 and type"))
+
+(defun add-column-schema-short+long-names (short-name long-name
+					   &rest short-long-names)
+  (labels ((add-short+long (short long)
+	     (setf *valid-column-schema*
+		   (remove short *valid-column-schema* :key #'car :test #'eq))
+	     (push (cons short long) *valid-column-schema*)))
+    (add-short+long short-name long-name)
+    (loop
+       :for sublist :on short-long-names :by #'cddr
+       :do (add-short+long (car sublist) (cadr sublist)))))
+
+
