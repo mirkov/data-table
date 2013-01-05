@@ -22,4 +22,5 @@
 	    :components
 	    ((:file "example-w-native-arrays")
 	     (:file "example-w-foreign-arrays")
+	     (:file "example-w-interpolation")
 	     (:file "example-w-fitting")))))

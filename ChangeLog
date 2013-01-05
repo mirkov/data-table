@@ -1,3 +1,35 @@
+2013-01-05  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/matching-functions.lisp (column-matcher):
+	bug-fix.  I now normalize function prior to matching
+
+	* column-major-table/foreign-column.lisp
+	(coerce-vector-grid-type): Routines for foreign schemas
+
+	* column-major-table/matching-functions.lisp (in): Added the `in'
+	function
+
+	* column-major-table/foreign-column.lisp (foreign-double-schema):
+	Defined default value-normalizer to coerce all values to
+	double-float
+
+	* column-major-table/matching-functions.lisp (value, setf value):
+	Changed from nested aref to vvref.  vvref has support for grids
+
+	* column-major-table/cmt-io.lisp (read-table): Added after method
+	to coerce vector grid types
+
+2013-01-04  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/table-building.lisp (normalize-vector): Added
+	:around method for native arrays.
+
+	* column-major-table/matching-functions.lisp (setf value): New function
+
+	* column-major-table/table-building.lisp (coerce-vector-grid-type)
+	(coerce-vectors-grid-type): New routines that are used to coerce
+	the vector type (native or foreign) to the schema specifivation
+
 2013-01-03  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/interpolated-column.lisp (:numeric-table):

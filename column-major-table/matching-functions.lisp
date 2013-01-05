@@ -1,6 +1,6 @@
 (in-package :numeric-table)
 
-(export '(matching-rows empty-p not-empty-p))
+(export '(matching-rows in empty-p not-empty-p))
 
 
 (defgeneric column-matcher (column-schema value-or-test table &optional predicate)
@@ -42,13 +42,16 @@ function returns true if the columns value equals the empty value"
 	    (aif predicate it
 		 (slot-value column-schema 'equality-predicate)))
 	   (table-data (table-data table))
-	   (empty-value (empty-value column-schema)))
+	   (normalized-empty-value
+	    (funcall (value-normalizer column-schema)
+		     (empty-value column-schema)
+		     column-schema)))
       (assert n-column ()
 	      "Column index:~a is nil" n-column)
       #'(lambda (N-row)
 	  (funcall predicate
 		   (vvref table-data N-row n-column)
-		   empty-value))))
+		   normalized-empty-value))))
   (:method ((column-schema column-schema) (test (eql 'not-empty-p)) table
 	    &optional predicate)
     "Return a function of a single argument N-row, the row index.
@@ -124,17 +127,35 @@ The WHERE function is used to find the first matching instance.
 The function returns nil if no value matches the WHERE and COLUMN-NAME"
   (let* ((data (table-data table))
 	 (schema (table-schema table))
-	 ;; we now select the matching rows
+	 (column-schema (find-column-schema column-name schema))
 	 (i-row (loop for i below (row-count table)
 		   when (funcall where i)
 		   do (return i))))
     (when i-row
-      (aref
-       (aref data
-	     (slot-value (find-column-schema column-name schema)
-			 'i-column))
-       i-row))))
+      (vvref data i-row (i-column column-schema)))))
   
+
+(defun in (column source-table query-table &optional predicate)
+  "Build a WHERE function of row index I that returns true when the
+value in COLUMN of QUERY-TABLE is found in COLUMN of SOURCE-TABLE"
+  ;; Offers the same functionality as PCL's In function (p. 396).  But
+  ;; the structure is completely different.  The interface is also
+  ;; different.
+  (let ((target-schema (find-column-schema column query-table))
+	(target-data (table-data query-table)))
+    (unless predicate
+      (setf predicate
+	    (equality-predicate target-schema)))
+    (let ((j-target (i-column target-schema)))
+      (lambda (i-row)
+	(let ((target-value (vvref target-data i-row j-target)))
+	  ;; Use iter instead of `find' or `loop' in order to
+	  ;; accomodate grids as well as arrays.
+	  (iter:iter
+	    (iter:for element :vector-element (table-column column source-table))
+	    (when (funcall predicate target-value element)
+	      (return t))
+	    (iter:finally (return nil))))))))
 
 (define-test value
   (let ((table (loaded-test-table)))
@@ -144,5 +165,26 @@ The function returns nil if no value matches the WHERE and COLUMN-NAME"
     (let ((mf (matching-rows  table '(sepal-length 5.4) '(petal-width 99))))
       (assert-true (not (value table :where mf :column-name 'sepal-width))))))
 
-#+unfinished(defmethod in ((table column-major-table) name)
-  (member))
+
+(defmethod (setf value) (value (table column-major-table) &key where column-name)
+  "Set a table value"
+  (let* ((data (table-data table))
+	 (schema (table-schema table))
+	 (column-schema (find-column-schema column-name schema))
+	 ;; we now select the matching rows
+	 (i-row (loop for i below (row-count table)
+		   when (funcall where i)
+		   do (return i))))
+    (when i-row
+      (setf (vvref data i-row (i-column column-schema))
+	    (funcall (value-normalizer column-schema) value column-schema)))))
+
+
+(define-test setf-value
+  (let ((table (loaded-test-table)))
+    (let ((mf (matching-rows  table '(sepal-length 5.4) '(petal-width 0.4))))
+      (assert-number-equal 3.9 (value table :where mf :column-name 'sepal-width))
+      (assert-number-equal 1.7 (value table :where mf :column-name 'petal-length))
+      (setf (value table :where mf :column-name 'sepal-width) 3.85)
+      (assert-number-equal 3.85 (value table :where mf :column-name 'sepal-width)))))
+

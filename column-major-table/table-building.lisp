@@ -1,6 +1,6 @@
 (in-package :numeric-table)
 
-(export '(row-by-row insert-row))
+(export '(row-by-row insert-row coerce-vectors-grid-type vector-length))
 
 (defmethod insert-row ((row list) (table column-major-table))
   "Insert a new table row
@@ -111,8 +111,8 @@ VECTOR is either a CL vector or a GRID vector")
 
 Normalization is done using the value-normalizer specified in COLUMN-SCHEMA
 
-The vector storage method (native, or foreign) is also determined by
-the type of COLUMN-SCHEMA")
+The vector storage method (native, or foreign) is determined by the
+type of COLUMN-SCHEMA")
   (:method (vector (column-schema column-schema))
     (let ((value-normalizer (slot-value column-schema 'value-normalizer)))
       (grid:map-grid :source vector
@@ -186,3 +186,29 @@ the type of COLUMN-SCHEMA")
     (assert-number-equal 3.2 (vvref (table-data table) 1 1))
     (assert-number-equal 3.1 (vvref (table-data table) 2 1))
     (assert-number-equal 1.3 (vvref (table-data table) 1 2))))
+
+
+(defgeneric coerce-vector-grid-type (vector column-schema)
+  (:documentation 
+"Return vector as either a native or foreign array, depending on
+column-schema
+
+This routine operates on a small subset of column schemas, mainly
+those dealing with numbers stored as double float.  For all the
+others, it returns the original vector, assumed to be in native
+format.
+")
+  (:method (vector (column-schema t))
+    (declare (ignore column-schema))
+    vector))
+
+
+
+(defmethod coerce-vectors-grid-type ((table column-major-table))
+  (let ((table-schema (table-schema table))
+	(table-data (table-data table)))
+    (loop :for i :upfrom 0
+       :for column-schema :in table-schema
+       :do (setf (aref table-data i)
+		 (coerce-vector-grid-type (aref table-data i)
+				 	  column-schema)))))

@@ -10,7 +10,10 @@ appropriate for GSLL and other C and Fortran libraries"))
 (add-column-schema-short+long-names 'foreign-column 'foreign-column-schema)
 
 (defclass foreign-double-schema (foreign-column-schema)
-  ((default-type :initform 'double-float))
+  ((default-type :initform 'double-float)
+   (value-normalizer :initform (lambda (value column-schema)
+				 (declare (ignore column-schema))
+				 (float value 1d0))))
   (:documentation "Stores a vector of double float values as a foreign-array"))
 
 (add-column-schema-short+long-names 'foreign-double 'foreign-double-schema)
@@ -27,8 +30,6 @@ appropriate for GSLL and other C and Fortran libraries"))
 (defmethod normalize-vector :around (vector (column-schema foreign-column-schema))
   (let ((grid:*default-grid-type* 'grid:foreign-array))
     (call-next-method)))
-
-
 
 (defmethod (setf nth-column) :before ((column-vector grid:vector-double-float)
 				      (column-index integer)
@@ -58,3 +59,30 @@ appropriate for GSLL and other C and Fortran libraries"))
     (assert-number-equal 4.9 (vvref (table-data table) 0 0))
     (assert-number-equal 3.2 (vvref (table-data table) 1 1))
     (nth-column 1 table)))
+
+
+
+
+
+;; Vector storage coercion.  If I start havving issues with copy-to, I
+;; can revert to map-grid (which copy-to calls)
+(defmethod coerce-vector-grid-type ((vector array)
+				    (column-schema foreign-double-schema))
+  (declare (ignore column-schema))
+  (grid:copy-to vector 'grid:foreign-array))
+
+
+(defmethod coerce-vector-grid-type ((vector grid:vector-double-float)
+				    (column-schema foreign-double-schema))
+  (declare (ignore column-schema))
+  vector)
+
+(defmethod coerce-vector-grid-type ((vector array)
+				    (column-schema number))
+  (declare (ignore column-schema))
+  vector)
+
+(defmethod coerce-vector-grid-type ((vector grid:vector-double-float)
+				    (column-schema number))
+  (declare (ignore column-schema))
+  (grid:copy-to vector 'array))
