@@ -9,6 +9,10 @@
     :initform 1d0
     :documentation "Name of column or a double-float specifying the sigma
 Initially set to 1d0")
+   (fit-coeffs
+    :accessor fit-coeffs
+    :initform nil
+    :documentation "List of fitting coefficients")
    (chi^2
     :reader chi^2
     :initform nil
@@ -16,10 +20,7 @@ Initially set to 1d0")
   (:documentation "Base class for fitting"))
 
 (defclass linear-column-fit (column-fit)
-  ((fit-coeffs
-    :reader fit-coeffs
-    :initform nil
-    :documentation "List of fitting coefficients")
+  (
    (covariance
     :reader covariance
     :initform nil

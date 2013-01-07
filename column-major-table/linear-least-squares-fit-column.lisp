@@ -45,7 +45,7 @@ Also stores the fitting results: coefficients, covariance matrix, and chi^2"))
 	      (slot-value y-schema 'chi^2) chi^2
 	      (slot-value y-schema 'independent-var) x-name)))))
 
-(defmethod fit-estimate ((table column-major-table)
+(defmethod evaluate ((table column-major-table)
 			 (y-schema ax+b-least-squares-column-schema) x-value)
   (let* ((x-schema (find-column-schema (col-independent-var y-schema) table)))
     (destructuring-bind (c0 c1)
@@ -76,7 +76,7 @@ Also stores the fitting results: coefficients, covariance matrix, and chi^2"))
 	      (slot-value y-schema 'chi^2) chi^2
 	      (slot-value y-schema 'independent-var) x-name)))))
 
-(defmethod fit-estimate ((table column-major-table)
+(defmethod evaluate ((table column-major-table)
 			 (y-schema ax-least-squares-column-schema)
 			 x-value)
   (let ((x-schema (find-column-schema (col-independent-var y-schema) table)))

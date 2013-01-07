@@ -10,10 +10,10 @@
 %TCIDATA{<META NAME="SaveForMode" CONTENT="1">}
 %TCIDATA{BibliographyScheme=Manual}
 %TCIDATA{Created=Sunday, December 09, 2012 07:04:33}
-%TCIDATA{LastRevised=Sunday, December 09, 2012 16:52:46}
+%TCIDATA{LastRevised=Sunday, January 06, 2013 09:04:03}
 %TCIDATA{<META NAME="GraphicsSave" CONTENT="32">}
 %TCIDATA{<META NAME="DocumentShell" CONTENT="Standard LaTeX\Standard LaTeX Article">}
-%TCIDATA{CSTFile=40 LaTeX article.cst}
+%TCIDATA{CSTFile=USTDC-BriefReport.cst}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{acknowledgement}[theorem]{Acknowledgement}
@@ -38,7 +38,6 @@
 \newtheorem{summary}[theorem]{Summary}
 \newenvironment{proof}[1][Proof]{\noindent\textbf{#1.} }{\ \rule{0.5em}{0.5em}}
 \input{tcilatex}
-
 \begin{document}
 
 \title{Standard 
@@ -82,7 +81,7 @@ y=Ae^{-Bi}  \label{def:y(i)}
 
 The residual is%
 \begin{eqnarray}
-r_{i} &=&y_{i}-y\left( i\right)  \\
+r_{i} &=&y_{i}-y\left( i\right) \\
 &=&ae^{-bi}-Ae^{-Bi}  \label{eq:r_i^2}
 \end{eqnarray}%
 Its residual with respect to $A$ and $B$ is calculated next. For $A$,%
@@ -109,9 +108,9 @@ r_{i}^{2}=a^{2}\left( e^{-2b}\right) ^{i}-2aA\left( e^{-\left( b+B\right)
 
 Introducint%
 \begin{eqnarray}
-\alpha  &=&e^{-2b}  \label{def:alpha} \\
-\beta  &=&e^{-\left( b+B\right) }  \label{def:beta} \\
-\gamma  &=&e^{-2B}  \label{def:gamma}
+\alpha &=&e^{-2b}  \label{def:alpha} \\
+\beta &=&e^{-\left( b+B\right) }  \label{def:beta} \\
+\gamma &=&e^{-2B}  \label{def:gamma}
 \end{eqnarray}%
 the residual squared is%
 \begin{equation}
@@ -130,11 +129,11 @@ S &=&\sum r_{i}^{2} \\
 I will be using the summation identity%
 \begin{eqnarray}
 \sum_{i=0}^{n}c^{i} &=&\frac{1-c^{n+1}}{1-c} \\
-&=&\sigma _{n}\left( c\right)   \label{def:sigma-fun}
+&=&\sigma _{n}\left( c\right)  \label{def:sigma-fun}
 \end{eqnarray}%
 and its derivativeThe derivative of $\sigma $ is%
 \begin{eqnarray}
-\frac{d\sigma }{dc} &=&\frac{d}{dc}\left( \frac{1-c^{n+1}}{1-c}\right)  \\
+\frac{d\sigma }{dc} &=&\frac{d}{dc}\left( \frac{1-c^{n+1}}{1-c}\right) \\
 &=&\frac{\left( 1-c\right) \left( -\left( n+1\right) c^{n}\right) -\left(
 1-c^{n+1}\right) \left( -1\right) }{1-c^{2}} \\
 &=&\frac{cc^{n}n-c^{n}-c^{n}n+1}{1-c^{2}} \\
@@ -146,7 +145,7 @@ and its derivativeThe derivative of $\sigma $ is%
 Using $\sigma $, the sum of residual squared is%
 \begin{equation}
 S=a^{2}\sigma _{n}\left( \alpha \right) -2aA\sigma \left( \beta \right)
-+A^{2}\sigma \left( \gamma \right)   \label{eq:S(sigma,alpha,beta,gamma)}
++A^{2}\sigma \left( \gamma \right)  \label{eq:S(sigma,alpha,beta,gamma)}
 \end{equation}
 
 \subsection{Partial derivatives of $S$}
@@ -161,12 +160,12 @@ the partial derivative is zero.
 The derivative of $S$ with respect to $A$ is%
 \begin{equation}
 \frac{\partial S}{\partial A}=-2a\sigma \left( \beta \right) +2A\sigma
-\left( \gamma \right) 
+\left( \gamma \right)
 \end{equation}%
 At match, this becomes%
 \begin{eqnarray}
 \frac{\partial S}{\partial A} &=&a\sigma \left( \beta \right) +2a\sigma
-\left( \beta \right)  \\
+\left( \beta \right) \\
 &=&0
 \end{eqnarray}
 
@@ -179,9 +178,9 @@ d\beta }\frac{\partial \beta }{\partial B}+A^{2}\frac{d\sigma \left( \gamma
 
 The derivatives of $\beta $ and $\gamma $ are%
 \begin{eqnarray}
-\frac{\partial \beta }{\partial B} &=&-\beta  \\
-&=&-\gamma  \\
-\frac{\partial \gamma }{\partial B} &=&-2\gamma 
+\frac{\partial \beta }{\partial B} &=&-\beta \\
+&=&-\gamma \\
+\frac{\partial \gamma }{\partial B} &=&-2\gamma
 \end{eqnarray}%
 The partial derivative is%
 \begin{equation}
@@ -195,6 +194,17 @@ At match this becomes%
 \right) }{d\beta }-2a^{2}\gamma \frac{d\sigma \left( \beta \right) }{d\beta }
 \\
 &=&0
+\end{eqnarray}
+
+\section{Another function}
+
+\begin{equation}
+y=A10^{Bx}
+\end{equation}%
+the Jacobian is%
+\begin{eqnarray}
+\frac{d}{dA}\left( A10^{Bx}\right)  &=&10^{Bx} \\
+\frac{d}{dB}\left( A10^{Bx}\right)  &=&\ln 10Ax10^{Bx}
 \end{eqnarray}
 
 \end{document}

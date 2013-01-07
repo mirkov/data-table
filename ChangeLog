@@ -1,4 +1,23 @@
+2013-01-06  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/interpolated-column.lisp (interp-column)
+	(evaluate): Replaced interp-column function with evaluate.
+
+	* column-major-table/column-fitting.lisp (column-fit): Moved
+	fit-coeffs slot from linear-column-fit to column-fit.  This makes
+	it avaialable to non-linear fitting
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp (evaluate):
+	Added method for nonlinear fitting
+
 2013-01-05  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/non-lin-least-sq-fit-column.lisp
+	(init-nonlin-column-fit): Added generic function and method
+	specialized on column names.
+
+	* column-major-table/linear-least-squares-fit-column.lisp
+	(fit-estimate): Renaming to `evaluate'
 
 	* column-major-table/matching-functions.lisp (column-matcher):
 	bug-fix.  I now normalize function prior to matching

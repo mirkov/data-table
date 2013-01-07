@@ -157,7 +157,7 @@ GSLL-OTHER-INTERPOLATION
 	   (aref (table-data column-table)
 		 (position y-name table-schema :key #'column-name))))))
 
-(defgeneric interp-column (column value table)
+#+skip(defgeneric interp-column (column value table)
   (:documentation
 "Interpolated a table column
 
@@ -168,16 +168,16 @@ It is either its name or its schema")
     (let ((column-schema (find-column-schema name table)))
       (interp-column column-schema value table))))
 
-(defmethod interp-column ((y-column-schema gsll-spline-interpolation) value
-			  (column-table numeric-table))
+(defmethod evaluate ((column-table numeric-table)
+		     (y-column-schema gsll-spline-interpolation) value)
   (gsll:evaluate (interpolation-data y-column-schema)
 		 value
 		 :acceleration
 		 (acceleration y-column-schema)))
 
-(defmethod interp-column ((y-column-schema gsll-other-interpolation)
-			  value
-			  (column-table numeric-table))
+(defmethod evaluate ((column-table numeric-table)
+			  (y-column-schema gsll-other-interpolation)
+			  value)
   (let* ((y-index (i-column y-column-schema))
 	 (y-data (aref (table-data column-table) y-index))
 	 (x-name (col-independent-var y-column-schema))

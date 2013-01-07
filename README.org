@@ -25,6 +25,9 @@
    and storing values of a one type.  The data in columns can be
    stored as foreign arrays and used in numerical analysis via GSLL.
 
+   For examples of use of column-major-tables see [[file:user/example1/README.org][this file]], and
+   other lisp and png files in that directory.
+
 * Documentation
 
   Documentation is maintained for users and separately for

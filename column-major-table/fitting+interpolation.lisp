@@ -23,7 +23,9 @@ This slot's definition is updated by inherited classes"))
 
 (defgeneric evaluate (table column x-value)
   (:documentation
-"Evaluate a column fit or interpolation for x-value"))
+"Evaluate a column fit or interpolation for x-value")
+  (:method ((table column-major-table) (name symbol) x-value)
+    (evaluate table (find-column-schema name table) x-value)))
 
 (defgeneric independent-var (table y-col)
   (:documentation 

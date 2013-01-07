@@ -1,6 +1,6 @@
 (in-package :numeric-table)
 
-(export '(non-lin-ls-sq-column-schema
+(export '(nonlinear-ls-sq-column
 	  n-coeffs fit-fun fit-fun-jacobian fit-method independent-var sigma
 	  init-nonlin-column-fit fit-column))
 
@@ -43,6 +43,18 @@ The schema stores GSLL's method, and the functions that will be called by ..."))
 
 (add-column-schema-short+long-names 'nonlinear-ls-sq-column 
 				    'non-lin-ls-sq-column-schema)
+
+(defgeneric init-nonlin-column-fit (column table fit-fun fit-fun-jacobian
+				    n-coeffs)
+  (:documentation
+"Initialize non-linear fitting for TABLE's COLUMN using FIT-FUN and
+FIT-FUN-JACOBIAN.  N-COEFFS is the number of fitting coefficients")
+  (:method ((column-name symbol) (table column-major-table) fit-fun
+				   fit-fun-jacobian n-coeffs)
+    (init-nonlin-column-fit (find-column-schema column-name table)
+			    table
+			    fit-fun fit-fun-jacobian
+			    n-coeffs)))
 
 (defmethod init-nonlin-column-fit ((y-schema non-lin-ls-sq-column-schema)
 				   (table column-major-table)
@@ -96,14 +108,14 @@ Example:
 	  (n-coeffs y-schema) n-coeffs)
     (let ((y (table-column y-name table))
 	  (x (table-column x-name table))
-	  (sigma (if (symbolp sigma-def)
-		     (table-column sigma-def table)
-		     sigma-def))
+	  (sigma-value/s/ (if (symbolp sigma-def)
+			      (table-column sigma-def table)
+			      sigma-def))
 	  ;; the following two will be passed to GSLL
 	  (load-residuals-fun (gensym "LOAD-RESIDUALS-FUN"))
 	  (load-jacobian-fun (gensym "LOAD-JACOBIAN-FUN")))
       (setf (symbol-function load-residuals-fun)
-	    (if (symbolp sigma)
+	    (if (symbolp sigma-def)
 		(lambda (coeffs residuals)
 		  "
 Syntax:
@@ -130,11 +142,12 @@ provided fit-functions and other data.
 
 FIT-FUN, X, and Y are provided via a closure.
 "
+		  #+manual-trace(print 'residual-function-with-vector-sigma)
 		  (dotimes (i (row-count table))
 		    (setf (grid:aref residuals i)
 			  (/ (- (funcall fit-fun (grid:aref x i) coeffs)
 				(grid:aref y i))
-			     (grid:aref sigma i))))
+			     (grid:aref sigma-value/s/ i))))
 		  (values))
 		(lambda (coeffs residuals)
 		  "
@@ -162,11 +175,12 @@ provided fit-functions and other data.
 
 FIT-FUN, X, and Y are provided via a closure.
 "
+		  #+manual-trace(print 'residual-function-with-scalar-sigma)
 		  (dotimes (i (row-count table))
 		    (setf (grid:aref residuals i)
 			  (/ (- (funcall fit-fun (grid:aref x i) coeffs)
 				(grid:aref y i))
-			     sigma)))
+			     sigma-value/s/)))
 		  (values)))
 	    (slot-value y-schema 'load-residuals-fun)
 	    load-residuals-fun)
@@ -200,6 +214,7 @@ provided fit-fun-jacobian and other data.
 FIT-FUN-JACOBIAN, X and a few other variables are provided via a
 closure.
 "
+	      #+manual-trace(print 'jacobian)
 	      (dotimes (i (row-count table))
 		(let ((jacobian-column (funcall fit-fun-jacobian (grid:aref x i)
 						coeffs)))
@@ -380,7 +395,7 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
       (when print-steps
 	(format t "iter: ~d x = ~{~15,8f ~} |f(x)|=~7,6g~&"
 		0 (loop for i below n-coeffs
-		       collect (fitx i))
+		     collect (fitx i))
 		(norm-f fit)))
       (loop for iter from 0 below max-steps
 	 until
@@ -402,8 +417,13 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
 	       (format t "chisq/dof = ~g~&" (/ (expt chi 2) dof))
 	       (dotimes (i n-coeffs)
 		 (format t "c_~g         = ~,5f +/- ~,5f~&" i (fitx i) (* c (err i)))))
-	     (return (loop for i below n-coeffs
-			collect (fitx i))))))))
+	     (let ((fit-coeffs (loop for i below n-coeffs
+				  collect (fitx i))))
+	       (setf (fit-coeffs y-schema)
+		     (grid:make-foreign-array 'double-float
+					      :dimensions n-coeffs
+					      :initial-contents fit-coeffs))
+	       (return fit-coeffs)))))))
 
 
 (define-test nonlinear-column-fit
@@ -470,6 +490,12 @@ This function is based on GSLL's NONLINEAR-LEAST-SQUARES-EXAMPLE"
 					  :coeffs-guess
 					  (grid:make-grid '((grid:foreign-array 3) double-float)
 							  :initial-contents (list 2 1 1)))))))
+
+(defmethod evaluate ((table column-major-table)
+			 (y-schema nonlinear-column-fit) x-value)
+  (let ((fit-coeffs (fit-coeffs y-schema))
+	(fit-fun (fit-fun y-schema)))
+    (funcall fit-fun x-value fit-coeffs)))
 
 (defun |sigma| (c n)
   (/ (- 1 (expt c (+ 1 n)))

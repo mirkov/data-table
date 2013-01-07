@@ -1,0 +1,21 @@
+The files in this directory provide examples of use of numeric-tables.
+US population data in the period 1610-2010 is used to show examples of
+queries, selection, fitting and interpolation (using GSLL).  The table
+has some empty cells.  We use interpolated values to fill them.
+
+  - example-w-native-arrays.lisp :: basic usage: 
+    - Read from file
+    - Queries
+    - Selections
+    - Dealing with empty data
+  - example-w-foreign-arrays.lisp :: Tables that store data in
+       foreign-arrays.  Replicates examples of examples in previous files
+  - example-w-interpolation.lisp :: Examples of fitting and setting
+       empty values with fitted ones.
+  - example-w-fitting.lisp :: Examples of linear and non-linear
+       fitting
+
+Interpolation and fitting results are shown in png files.
+
+I used code comments and documentation strings to highlight how to
+use numeric-tables in data analysis.
