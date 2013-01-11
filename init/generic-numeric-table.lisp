@@ -13,7 +13,7 @@
 	  make-column-schema
 	  normalize-for-column
 	  ;;
-	  column-names column-doc empty-value
+	  column-names column-name column-doc empty-value
 	  find-column-schema nth-column-schema
 	  ;;
 	  select value in

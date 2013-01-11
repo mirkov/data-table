@@ -69,7 +69,7 @@ appropriate for GSLL and other C and Fortran libraries"))
 (defmethod coerce-vector-grid-type ((vector array)
 				    (column-schema foreign-double-schema))
   (declare (ignore column-schema))
-  (grid:copy-to vector 'grid:foreign-array))
+  (grid:copy-to vector 'grid:foreign-array 'double-float))
 
 
 (defmethod coerce-vector-grid-type ((vector grid:vector-double-float)

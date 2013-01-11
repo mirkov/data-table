@@ -5,7 +5,7 @@
 ;;; use slot-value.
 
 
-(export '(init-column-interp interp-column
+(export '(init-column-interp
 	  linear-interpolation-column polynomial-interpolation-column
 	  cubic-spline-interpolation-column periodic-cubic-spline-interpolation-column
 	  akima-interpolation-column periodic-akima-interpolation-column))
@@ -217,7 +217,7 @@ polynomical."
 	(init-column-interp table 'y-col)
 	(let ((*epsilon* 1e-4))
 	  (assert-number-equal (expt 5.2 2)
-			       (interp-column 'y-col 5.2 table)))))))
+			       (evaluate table 'y-col 5.2)))))))
 
 (define-test linear-column-interp
   "Test column interpolation on x vs x^2 where x is a vector of
@@ -241,9 +241,9 @@ polynomical."
 ;;      (describe-object (find-column-schema 'y-col table) t)))
       (let ((*epsilon* 1e-4))
 	(assert-number-equal 1.5d0
-			     (interp-column 'y-col 1.5d0 table))
+			     (evaluate table 'y-col 1.5d0))
 	(assert-number-equal 3d0
-			     (interp-column 'y-col 2.5d0 table))))))
+			     (evaluate table 'y-col 2.5d0))))))
 
 (define-test polynomial-column-interp
   "Test column interpolation on x vs x^2 where x is a vector of
@@ -266,9 +266,9 @@ polynomical."
       (init-column-interp table 'y-col)
       (let ((*epsilon* 1e-4))
 	(assert-number-equal 3.25d0
-			     (interp-column 'y-col 1.5d0 table))
+			     (evaluate table 'y-col 1.5d0))
 	(assert-number-equal 7.25d0
-			     (interp-column 'y-col 2.5d0 table))))))
+			     (evaluate table 'y-col 2.5d0))))))
 
     
 

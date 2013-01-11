@@ -9,7 +9,8 @@
 	       "alexandria"
 	       "anaphora"
 	       "antik"
-	       "gsll")
+	       "gsll"
+	       "cl-cvs")
   :components
   ((:module "init"
 	    :serial t

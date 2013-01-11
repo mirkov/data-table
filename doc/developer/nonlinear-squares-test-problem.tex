@@ -10,7 +10,7 @@
 %TCIDATA{<META NAME="SaveForMode" CONTENT="1">}
 %TCIDATA{BibliographyScheme=Manual}
 %TCIDATA{Created=Sunday, December 09, 2012 07:04:33}
-%TCIDATA{LastRevised=Sunday, January 06, 2013 09:04:03}
+%TCIDATA{LastRevised=Monday, January 07, 2013 12:45:42}
 %TCIDATA{<META NAME="GraphicsSave" CONTENT="32">}
 %TCIDATA{<META NAME="DocumentShell" CONTENT="Standard LaTeX\Standard LaTeX Article">}
 %TCIDATA{CSTFile=USTDC-BriefReport.cst}
@@ -199,12 +199,19 @@ At match this becomes%
 \section{Another function}
 
 \begin{equation}
-y=A10^{Bx}
+y=A10^{B\left( x-1650\right) }
 \end{equation}%
 the Jacobian is%
 \begin{eqnarray}
-\frac{d}{dA}\left( A10^{Bx}\right)  &=&10^{Bx} \\
-\frac{d}{dB}\left( A10^{Bx}\right)  &=&\ln 10Ax10^{Bx}
-\end{eqnarray}
+\frac{d}{dA}\left( A10^{B\left( x-1650\right) }\right)  &=&10^{B\left(
+x-1650\right) } \\
+\frac{d}{dB}\left( A10^{B\left( x-1650\right) }\right)  &=&10^{B\left(
+x-1650\right) }A\left( \ln 10\right) \left( x-1650\right)  \\
+&=&\left( \ln 10\right) A\left( x-1650\right) 10^{B\left( x-1650\right) }
+\end{eqnarray}%
+Derivative 
+\begin{equation}
+\log _{10}y=\log _{10}A+Bx
+\end{equation}
 
 \end{document}

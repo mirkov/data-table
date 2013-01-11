@@ -1,3 +1,18 @@
+2013-01-11  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* numeric-table.asd (numeric-table): Added dependency on `cl-cvs'
+
+	* init/generic-numeric-table.lisp (:numeric-table): Added export
+	of `column-name'
+
+	* column-major-table/interpolated-column.lisp (:numeric-table):
+	Changed calls from class-specific method `interp-column' to more
+	generic `evaluate'
+
+	* column-major-table/foreign-column.lisp
+	(coerce-vector-grid-type): Fixed call to `grid:copy-to' to specify
+	the element type
+
 2013-01-06  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/interpolated-column.lisp (interp-column)

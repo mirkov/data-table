@@ -10,7 +10,7 @@
 %TCIDATA{<META NAME="SaveForMode" CONTENT="1">}
 %TCIDATA{BibliographyScheme=Manual}
 %TCIDATA{Created=Sunday, December 09, 2012 07:04:33}
-%TCIDATA{LastRevised=Sunday, January 06, 2013 09:02:07}
+%TCIDATA{LastRevised=Sunday, January 06, 2013 09:04:03}
 %TCIDATA{<META NAME="GraphicsSave" CONTENT="32">}
 %TCIDATA{<META NAME="DocumentShell" CONTENT="Standard LaTeX\Standard LaTeX Article">}
 %TCIDATA{CSTFile=USTDC-BriefReport.cst}
@@ -194,6 +194,17 @@ At match this becomes%
 \right) }{d\beta }-2a^{2}\gamma \frac{d\sigma \left( \beta \right) }{d\beta }
 \\
 &=&0
+\end{eqnarray}
+
+\section{Another function}
+
+\begin{equation}
+y=A10^{Bx}
+\end{equation}%
+the Jacobian is%
+\begin{eqnarray}
+\frac{d}{dA}\left( A10^{Bx}\right)  &=&10^{Bx} \\
+\frac{d}{dB}\left( A10^{Bx}\right)  &=&\ln 10Ax10^{Bx}
 \end{eqnarray}
 
 \end{document}
