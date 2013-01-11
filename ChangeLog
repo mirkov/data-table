@@ -1,5 +1,18 @@
 2013-01-11  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
+	* init/generic-numeric-table.lisp (table-description): Added
+	`description' slot to the table and `table-description' accessor
+
+	* numeric-table.asd (#:numeric-table): Fixed typo
+
+	* init/utilities.lisp (init-vv-array): Fixed bug in export list
+
+	* column-major-table/table-building.lisp (init-storage): Added
+	method specializing on column-major-table
+
+	* init/generic-numeric-table.lisp (init-storage): Added
+	init-storage generic function and exporting symbol
+
 	* numeric-table.asd (numeric-table): Added dependency on `cl-cvs'
 
 	* init/generic-numeric-table.lisp (:numeric-table): Added export

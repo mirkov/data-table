@@ -3,11 +3,11 @@
 
 (export '(numeric-table
 	  row-count column-count
-	  data-source data-author
+	  data-source data-author table-description
 	  make-table table-column set-table-column
 	  nth-column set-nth-column
 	  insert-row nth-row
-	  table-size
+	  table-size init-storage
 	  ;;
 	  make-table-schema
 	  make-column-schema
@@ -40,6 +40,9 @@ In case of a variable column count, return values 'variable and max-column-count
    (build-method :reader build-method
 		 :initform nil
 		 :documentation "A symbol specifying the build method")
+   (description :accessor table-description
+		:initform ""
+		:documentation "Use to store the description of the data")
    (data-source :accessor data-source
 		:documentation "The physical origin of the data
 
@@ -239,6 +242,10 @@ SCHEMA can be a COLUMN-SCHEMA or (when implemented) ROW-SCHEMA")
   (:method ((column-name symbol) (table numeric-table))
     (column-doc (find-column-schema column-name 
 				    (table-schema table)))))
+
+
+(defgeneric init-storage (table)
+  (:documentation "Initialize table's storage"))
 
 
 (defgeneric find-column-schema (column-name table-or-table-schema)

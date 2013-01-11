@@ -212,3 +212,13 @@ format.
        :do (setf (aref table-data i)
 		 (coerce-vector-grid-type (aref table-data i)
 				 	  column-schema)))))
+
+(defmethod init-storage ((table column-major-table))
+  "Initialize storage of a column-major-table"
+  (let ((table-data (table-data table))
+	(table-schema (table-schema table))
+	(table-length (row-count table)))
+    (loop for j from 0 below (column-count table)
+	 for column-schema in table-schema
+	 do (setf (aref table-data j)
+		  (make-vector table-length column-schema)))))

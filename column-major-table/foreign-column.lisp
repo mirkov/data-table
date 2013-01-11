@@ -15,7 +15,6 @@ appropriate for GSLL and other C and Fortran libraries"))
 				 (declare (ignore column-schema))
 				 (float value 1d0))))
   (:documentation "Stores a vector of double float values as a foreign-array"))
-
 (add-column-schema-short+long-names 'foreign-double 'foreign-double-schema)
 
 (defun foreign-column-suptypep (schema)

@@ -1,6 +1,6 @@
 (in-package :numeric-table)
 
-(export '(init-vv-array vv-ref))
+(export '(init-vv-array vvref))
 
 (defun mklist (thing)
   "Ensure that THING is a list.  If it is not, wrap it inside a list."

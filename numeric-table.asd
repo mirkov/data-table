@@ -10,7 +10,7 @@
 	       "anaphora"
 	       "antik"
 	       "gsll"
-	       "cl-cvs")
+	       "cl-csv")
   :components
   ((:module "init"
 	    :serial t
