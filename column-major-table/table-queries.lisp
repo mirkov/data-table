@@ -314,8 +314,9 @@ same as for PETAL-LENGTH"
 	    (sorted-rows data (mklist order-by) schema)))
 
     (let ((new-table
-	   (make-instance 'column-major-table :table-data data
-			  :table-schema schema)))
+	   (make-table 'column-major-table
+		       schema
+		       :table-data data)))
       (setf (slot-value new-table 'column-count)
 	    (length (table-data new-table))
 	    (slot-value new-table 'row-count)

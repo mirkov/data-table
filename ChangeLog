@@ -1,3 +1,14 @@
+2013-01-12  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/column-major-table-classes.lisp
+	(make-instance): Added method for instantiating a
+	column-major-table
+	(make-table): This function now leaves the intializations to
+	`make-instance'
+
+	* init/generic-numeric-table.lisp (make-instance): Added method
+	for instantiating a generic table.
+
 2013-01-11  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* init/generic-numeric-table.lisp (table-description): Added

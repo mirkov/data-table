@@ -38,20 +38,40 @@ In case of a variable column count, return values 'variable and max-column-count
 - Column names
 - Functions for setting and comparing column values")
    (build-method :reader build-method
+		 :initarg :build-method
 		 :initform nil
 		 :documentation "A symbol specifying the build method")
    (description :accessor table-description
 		:initform ""
 		:documentation "Use to store the description of the data")
    (data-source :accessor data-source
+		:initarg :data-source
 		:documentation "The physical origin of the data
 
 It can be a file, a computation, interactive, or something else")
    (data-author :accessor data-author
+		:initarg :data-author
 		:documentation "Who were the people that created the data
 
 This can be a journal reference or something else"))
   (:documentation "Stores a numeric table"))
+
+
+(defmethod initialize-instance :after ((self numeric-table)
+				 &key table-schema build-method
+				   data-source data-author
+				   table-data)
+  (setf (slot-value self 'table-schema) table-schema)
+  (awhen build-method
+    (setf (slot-value self 'build-method) it))
+  (awhen data-source
+    (setf (data-source self) it))
+  (awhen data-author
+    (setf (data-author self) it))
+  (awhen table-data
+    (setf (slot-value self 'table-data) it)))
+
+
 
 (defgeneric make-table (type table-schema &key build-method
 			     data-source data-author

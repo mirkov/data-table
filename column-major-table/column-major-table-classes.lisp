@@ -14,6 +14,30 @@ The table can be expanded by adding both rows and columns"))
 (define-test instantiate-column-major-table
   (assert-true (make-instance 'column-major-table)))
 
+
+(defmethod initialize-instance :after ((self column-major-table)
+				 &key build-method
+				   &allow-other-keys)
+  (setf (slot-value self 'column-count) (length (slot-value self 'table-schema)))
+  (unless (and (slot-boundp self 'table-data)
+	       (slot-value self 'table-data))
+    (setf
+     (slot-value self 'table-data)
+     (make-array (slot-value self 'column-count))))
+  (awhen build-method
+    (setf (slot-value self 'build-method) it)))
+
+(defmethod make-table ((type (eql 'column-major-table)) schema
+		       &key build-method data-source data-author
+			 table-data)
+  (let ((table (make-instance type
+			      :table-data table-data
+			      :table-schema schema
+			      :build-method build-method
+			      :data-source data-source
+			      :data-author data-author)))
+    table))
+
 (defmethod make-table-schema ((type (eql 'column-major-table)) spec)
   "Create a table schema by looping over list SPEC
 
@@ -57,19 +81,7 @@ name and column type"
     (assert-equal "column 2" (column-doc (find-column-schema 'petal-length schema)) "3")))
 
 
-(defmethod make-table ((type (eql 'column-major-table)) schema
-		       &key build-method data-source data-author)
-  (let ((table (make-instance type
-			      :table-schema schema)))
-    (setf (slot-value table 'column-count) (length schema)
-	  (slot-value table 'table-data) (make-array (slot-value table 'column-count)))
-    (awhen build-method
-      (setf (slot-value table 'build-method) it))
-    (awhen data-source
-      (setf (data-source table) it))
-    (awhen data-author
-      (setf (data-author table) it))
-    table))
+
 
 (defun test-column-table ()
   (make-table 'column-major-table (test-table-schema)))

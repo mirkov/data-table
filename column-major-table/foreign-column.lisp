@@ -7,7 +7,7 @@
   (:documentation "Schema for data stored in as foreign vectors
 appropriate for GSLL and other C and Fortran libraries"))
 
-(add-column-schema-short+long-names 'foreign-column 'foreign-column-schema)
+
 
 (defclass foreign-double-schema (foreign-column-schema)
   ((default-type :initform 'double-float)
@@ -15,7 +15,10 @@ appropriate for GSLL and other C and Fortran libraries"))
 				 (declare (ignore column-schema))
 				 (float value 1d0))))
   (:documentation "Stores a vector of double float values as a foreign-array"))
-(add-column-schema-short+long-names 'foreign-double 'foreign-double-schema)
+
+(progn
+  (add-column-schema-short+long-names 'foreign-column 'foreign-column-schema)
+  (add-column-schema-short+long-names 'foreign-double 'foreign-double-schema))
 
 (defun foreign-column-suptypep (schema)
   "Return true if SCHEMA type is a subtype of FOREIGN-COLUMN-SCHEMA"
