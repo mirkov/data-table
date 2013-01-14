@@ -33,7 +33,8 @@
 	     (:file "interpolated-column")
 	     (:file "column-fitting")
 	     (:file "linear-least-squares-fit-column")
-	     (:file "non-lin-least-sq-fit-column"))
+	     (:file "non-lin-least-sq-fit-column")
+	     (:file "fft"))
 	    )
    #+2d-table-implemented
    (:module "2d-table"

@@ -20,8 +20,7 @@ Initially set to 1d0")
   (:documentation "Base class for fitting"))
 
 (defclass linear-column-fit (column-fit)
-  (
-   (covariance
+  ((covariance
     :reader covariance
     :initform nil
     :documentation "Three element list storing the covariance matrix

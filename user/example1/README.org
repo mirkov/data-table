@@ -2,6 +2,8 @@ The files in this directory provide examples of use of numeric-tables.
 US population data in the period 1610-2010 is used to show examples of
 queries, selection, fitting and interpolation (using GSLL).  The table
 has some empty cells.  We use interpolated values to fill them.
+Solar sunspot data is used to demonstrate power spectrum calculations
+using the GSLL's fft.
 
   - example-w-native-arrays.lisp :: basic usage: 
     - Read from file
@@ -14,6 +16,7 @@ has some empty cells.  We use interpolated values to fill them.
        empty values with fitted ones.
   - example-w-fitting.lisp :: Examples of linear and non-linear
        fitting
+  - example-w-fft.lisp :: Power spectrum of the solar sunspot number data
 
 Interpolation and fitting results are shown in png files.
 
