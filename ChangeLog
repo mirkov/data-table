@@ -1,3 +1,9 @@
+2013-01-22  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* init/generic-numeric-table.lisp (import-table-from-csv-file):
+	New generic function.  It overlaps with `read-table' which is more
+	general.
+
 2013-01-12  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/column-major-table-classes.lisp

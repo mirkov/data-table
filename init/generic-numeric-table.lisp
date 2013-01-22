@@ -338,3 +338,11 @@ COLUMN-NAME is a column name as stored "))
 
 (defgeneric read-table (stream table)
   (:documentation "Read TABLE from STREAM"))
+
+(defgeneric import-table-from-csv-file (stream table &key)
+  (:documentation "Import the data from a csv file
+
+STREAM - a file opened for reading
+TABLE - a numeric table
+
+keywords are used by individual methods to specify details of data import "))
