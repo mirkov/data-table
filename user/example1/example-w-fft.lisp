@@ -101,6 +101,14 @@ to claim anything like that.
     (gnuplot:plot-xy (table-column 'year *solar-spots*)
 		     (table-column 'spots *solar-spots*))))
 
+(gnuplot:with-png-output ("solar-sunsport-maunder-minimum.png" *png-dir*)
+  (gnuplot:set-to
+      ((title "Yearly sunspot number")
+       (xlabel "Year")
+       (xrange '(1650 1710)))
+    (gnuplot:plot-xy (table-column 'year *solar-spots*)
+		     (table-column 'spots *solar-spots*))))
+
 (gnuplot:with-png-output ("solar-sunsport-power-spectrum.png" *png-dir*)
   (gnuplot:set-to
       ((title "Power spectrum of yearly sunspot number")

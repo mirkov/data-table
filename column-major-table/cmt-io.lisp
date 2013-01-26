@@ -1,6 +1,6 @@
 (in-package :numeric-table)
 
-(export '(read-table))
+(export '(read-table write-table))
 
 (defmethod read-table (stream (table column-major-table))
   "Read table contents from stream"
@@ -22,3 +22,10 @@
 type (native cl:array or grid:foreign-array) "
   (declare (ignore stream))
   (coerce-vectors-grid-type table))
+
+(defun write-table (stream table)
+  (dotimes (j (column-count table))
+    (cl-csv:write-csv-row
+     (loop for i below (row-count table)
+	collect (vvref (table-data table) i j))
+     :stream stream)))

@@ -1,3 +1,18 @@
+2013-01-26  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/fft.lisp (freq-axis): New function
+
+	* column-major-table/cmt-io.lisp (write-table): New function
+
+2013-01-16  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* init/generic-numeric-table.lisp (): Added object and function
+	column schemas
+	(): Changed multiple calls to add-column-schema-short+long-names
+	to single call, since it now accepts multple pairs of arguments.
+	(numeric-table): Fixed export list, substituting
+	normalize-for-column with value-normalizer
+
 2013-01-12  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/column-major-table-classes.lisp

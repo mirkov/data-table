@@ -186,3 +186,21 @@ COLUMN-SCHEMA is either the schema or its name")
 	   (gsll:fft-shift ps :stride (stride column-schema))
 	   ps)
        axis))))
+
+
+(defgeneric freq-axis (column table &key shifted)
+  (:documentation "Calculate the frequency axis for column data
+
+COLUMN is either a column-name or column-schema
+TABLE is the table
+
+If SHIFTED is T, a shifted axis is returned.  Otherwise, the unshifted
+axis is returned")
+  (:method ((column-name symbol) (table column-major-table) &key shifted)
+    (freq-axis (find-column-schema column-name table) table :shifted shifted))
+  (:method ((column-schema float-fft-column-schema) (table column-major-table)
+	    &key shifted)
+    (gsll:fft-frequency-vector 'double-float (row-count table)
+			       :sample-spacing
+			       (sample-delta column-schema)
+			       :shifted shifted)))

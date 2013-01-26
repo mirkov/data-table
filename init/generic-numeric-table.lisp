@@ -10,8 +10,11 @@
 	  table-size init-storage
 	  ;;
 	  make-table-schema
+	  table-schema
 	  make-column-schema
-	  normalize-for-column
+	  value-normalizer
+	  ;;
+	  object
 	  ;;
 	  column-names column-name column-doc empty-value
 	  find-column-schema nth-column-schema
@@ -23,7 +26,7 @@
   ((table-data :initarg :table-data
 	  :reader table-data
 	  :documentation "Table data")
-   (row-count :reader row-count
+   (row-count :accessor row-count
 	      :initform 0
 	      :documentation "Return number of rows
 In case of variable row count return values 'variable and max-row-count")
@@ -193,6 +196,27 @@ sub-classes"))
    (default-type :initform 'symbol))
   (:documentation "Column schema for storing symbols"))
 
+(defclass object-column-schema (column-schema)
+  ((equality-predicate :initform #'eq
+		       :documentation
+"By default objects are equal if they are the same object, not only if
+they are of the same class")
+   (comparator :initform (lambda (arg1 arg2)
+			   (declare (ignore arg1 arg2))
+			   (error "Camparator not defined for `object-column-schema'")))
+   (default-type :initform 'class))
+  (:documentation "Column schema for storing objects"))
+
+(defclass function-column-schema (column-schema)
+  ((equality-predicate :initform #'eq
+		       :documentation
+"Two functions are equal if they are same (symbol-function)")
+   (comparator :initform (lambda (arg1 arg2)
+			   (declare (ignore arg1 arg2))
+			   (error "Camparator not defined for `function-column-schema'")))
+   (default-type :initform 'function))
+  (:documentation "Column schema for storing functions"))
+
 
 ;; I am not sure that value-normalization should check for type
 ;; correctness
@@ -212,10 +236,11 @@ sub-classes"))
   the class name")
 
 
-(progn
-  (add-column-schema-short+long-names 'string 'string-column-schema)
-  (add-column-schema-short+long-names 'number 'number-column-schema)
-  (add-column-schema-short+long-names 'symbol 'symbol-column-schema))
+(add-column-schema-short+long-names 'string 'string-column-schema
+				    'number 'number-column-schema
+				    'symbol 'symbol-column-schema
+				    'object 'object-column-schema
+				    'function 'function-column-schema)
 
 (defun column-schema-long-name (short-name)
   "Return long-name for column-schema"
