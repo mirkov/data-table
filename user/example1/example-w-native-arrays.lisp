@@ -94,9 +94,10 @@ data.")
 
 (defparameter *table-before-1900/b*
   (select *raw-table*
-	  :where (lambda (i)
+	  :where (lambda (row)
 		   (< (numeric-table::vvref
-		       (numeric-table::table-data *raw-table*) i 0) 1900)))
+		       (numeric-table::table-data *raw-table*)
+		       (nested-vectors:row-index row) 0) 1900)))
   "Subset of *raw-table* with data before year 1900, but explicitly
 specifying the selection function.  This implementation is problematic
 since I use the internals of numeric-table: vvref and column indices")
@@ -160,7 +161,7 @@ interpolate the missing data.
 	  (merge-pathnames rel-dir-name
 			   (asdf:system-source-directory "numeric-table-user"))))
     (assert pathname ()
-	    "Datafile: ~a not found" rel-file-name)
+	    "Datafile: ~a not found" rel-dir-name)
     pathname)
   "Pathname to file with US population data 1610-2010.  The file has
   missing values labeled with `?'")

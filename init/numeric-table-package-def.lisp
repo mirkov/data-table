@@ -1,12 +1,19 @@
 ;;;; numeric-table.lisp
 
 (defpackage #:numeric-table
-  (:use #:cl #:lisp-unit)
+  (:use #:cl #:lisp-unit #:nested-vectors
+	#:unified-sequences)
   (:import-from :alexandria
 		#:with-gensyms)
   (:import-from #:anaphora
 		:awhen :aif
 		:it)
+  (:shadow :row-count
+	   :column-count
+	   :nth-row
+	   :nth-column
+	   :add-row
+	   :select)
   #+export-from-package-def
   (:export :row-count
 	   :column-count

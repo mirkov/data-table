@@ -1,60 +1,15 @@
 (in-package :numeric-table)
 
-(export '(init-vv-array vvref))
+#+skip(export '(init-vv-array vvref))
 
 (defun mklist (thing)
   "Ensure that THING is a list.  If it is not, wrap it inside a list."
   (if (listp thing) thing (list thing)))
 
-(defun init-vv-array (columns)
-  "Initialize nested vector array
-
-The outer vector is of length COLUMNS
-
-Each of its elements is initialized as an adjustable vector of
-dimension 0 and fill-pointer set to 0"
-  (let ((vv-array (make-array columns)))
-    (dotimes (j columns)
-      (setf (grid:aref vv-array j) (make-array 0 :adjustable t :fill-pointer 0)))
-    vv-array))
 
 
-(defun vvref (nested-vector i-row i-col)
-  "Return element stored in I-ROW and I-COL of NESTED-VECTOR"
-  (grid:aref (grid:aref nested-vector i-col) i-row))
-
-(defun set-vvref (nested-vector i-row i-col value)
-  "Set element in I-ROW and I-COL of NESTED-VECTOR to VALUE"
-  (setf (grid:aref (grid:aref nested-vector i-col) i-row) value))
-
-(defsetf vvref set-vvref)
 
 
-(defun vv-table-equal (ref-table test-table
-			  &key (test #'equal)
-			    (target-rows (loop for i below (length (grid:aref ref-table 0))
-					      collect i))
-			    (target-cols (loop for i below (length ref-table)
-					      collect i)))
-  "Return true if elements in REF-TABLE match those in TEST-TABLE
-
-The two tables have the same number of columns, but REF-TABLE may have
-fewer rows.  TARGET-ROWS is a list of row indices of REF-TABLE.
-
-The i-th row of TEST-TABLE is tested against the row addressed by
-the i-th element of TARGET-ROWS."
-  (notany #'null
-	  (loop
-	     :for ref-col-selector in target-cols
-	     :for ref-col =  (grid:aref ref-table ref-col-selector)
-	     :for test-col across test-table
-	     :collect (notany #'null
-			      (loop
-				 :for i-ref in target-rows
-				 :for ref-val = (grid:aref ref-col i-ref)
-				 :for i-test from 0
-				 :for test-val = (grid:aref test-col i-test)
-				 :collect (funcall test ref-val test-val))))))
 
 
 
@@ -76,3 +31,48 @@ and type"))
        :do (add-short+long (car sublist) (cadr sublist)))))
 
 
+(defun compare-nested-vectors (ref-nv test-nv
+			       &key (test #'equal)
+				 (target-rows
+				  (loop for i below (nested-vectors:row-count test-nv)
+				     collect i))
+				 (target-columns
+				  (loop for j below (nested-vectors:column-count test-nv)
+				     collect j)))
+  "Return true if elements in REF-NV match those in TEST-NV
+
+The TEST-NV may have fewer number of rows and columns than TEST-NV.
+
+TARGET-ROWS and TARGET-COLUMNS are lists of indices that are used to
+select rows and colulmns of REF-NV that are compared against those
+of TEST TABLE
+
+TEST is a two argument function used for testing for equality."
+  (notany #'null
+   (nested-vectors:reduce-columns
+    (lambda (arg1 &optional arg2)
+      (if arg2
+	  (and arg1 arg2)
+	  arg1))
+    (map-nested-vectors test
+			(nested-vectors:select ref-nv
+					       :target-rows target-rows
+					       :target-columns target-columns)
+			test-nv))))
+  
+(define-test compare-nvs
+  (let ((nv1 (make-nested-vector
+	      '(3 3)
+	      :initial-contents '((a b c) #(1 2 3) #m(1.0 2.0 3.0))))
+	(nv2 (make-nested-vector
+	      '(3 3)
+	      :initial-contents '((a b c) #(1 2 3) #m(1.0 2.0 3.0))))
+	(nv3 (make-nested-vector
+	      '(3 2)
+	      :initial-contents '((a b c) #m(1.0 2.0 3.0))))
+	(nv4 (make-nested-vector
+	      '(2 3)
+	      :initial-contents '((a  c) #(1  3) #m(1.0  3.0)))))
+    (assert-true (compare-nested-vectors nv1 nv2))
+    (assert-true (compare-nested-vectors nv1 nv3 :target-columns '(0 2)))
+    (assert-true (compare-nested-vectors nv1 nv4 :target-rows '(0 2)))))

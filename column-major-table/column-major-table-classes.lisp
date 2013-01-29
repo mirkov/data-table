@@ -16,27 +16,34 @@ The table can be expanded by adding both rows and columns"))
 
 
 (defmethod initialize-instance :after ((self column-major-table)
-				 &key build-method
-				   &allow-other-keys)
-  (setf (slot-value self 'column-count) (length (slot-value self 'table-schema)))
-  (unless (and (slot-boundp self 'table-data)
-	       (slot-value self 'table-data))
-    (setf
-     (slot-value self 'table-data)
-     (make-array (slot-value self 'column-count))))
-  (awhen build-method
-    (setf (slot-value self 'build-method) it)))
+				       &key
+					 table-data 
+					 &allow-other-keys)
+  (setf (column-count self) (length (table-schema self))
+	(table-data self)
+	(when table-data
+	    (progn
+	      (assert (typep table-data 'nested-vector))
+	      (assert (= (nested-vectors:column-count table-data)
+			 (column-count self)))
+	      table-data)
+	    )))
 
 (defmethod make-table ((type (eql 'column-major-table)) schema
 		       &key build-method data-source data-author
 			 table-data)
-  (let ((table (make-instance type
-			      :table-data table-data
-			      :table-schema schema
-			      :build-method build-method
-			      :data-source data-source
-			      :data-author data-author)))
+  (let* ((table-data-1
+	  (or table-data
+	      (make-nested-vector (list 0 (length schema)))))
+	 (table (make-instance type
+			       :table-data table-data-1
+			       :table-schema schema
+			       :build-method build-method
+			       :data-source data-source
+			       :data-author data-author)))
     table))
+
+
 
 (defmethod make-table-schema ((type (eql 'column-major-table)) spec)
   "Create a table schema by looping over list SPEC

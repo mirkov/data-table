@@ -10,7 +10,8 @@
 	       "anaphora"
 	       "antik"
 	       "gsll"
-	       "cl-csv")
+	       "cl-csv"
+	       "nested-vectors")
   :components
   ((:module "init"
 	    :serial t

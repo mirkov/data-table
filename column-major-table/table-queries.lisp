@@ -1,52 +1,74 @@
 (in-package :numeric-table)
 
-(defgeneric extractor (table table-schema)
-  (:documentation "Return a function of a row index I
+(defgeneric extractor (table-schema)
+  (:documentation "Return a function of a row accessor
 
-This function will return the list of values of TABLE's row I in
+This function will return the list of values of TABLE's row in
 columns identified by column-name of the new TABLE-SCHEMA
 
 TABLE-SCHEMA is supposed to be a sub-set of TABLE's own table-schema
 
 EXTRACTOR is used when we want to return a sub-set of the table's columns")
 ;;; Modeled after PCL's routine on p. 393
-  (:method ((old-table column-major-table) (table-schema cons))
-    (let* ((table-schema/old (table-schema old-table))
-	   (data (table-data old-table))
-	   (columns (mapcar
-		     (lambda (column-schema/new)
-		       (position-if
-			(lambda (column-schema/old)
-			  (equal (slot-value column-schema/new 'name)
-				 (slot-value column-schema/old 'name)))
-			table-schema/old))
-		     table-schema)))
-      #'(lambda (i-row)
-	  (mapcar (lambda (i-column)
-		    (vvref data i-row i-column))
-		  columns)))))
+  (:method ((table-schema cons))
+    (let ((column-indices (mapcar #'i-column table-schema)))
+      #'(lambda (row-accessor)
+	  (mapcar (lambda (column-index)
+		    (vrref row-accessor column-index))
+		  column-indices)))))
 
 (define-test extractor
-  (let* ((old-table (loaded-test-table))
-	 (old-schema (table-schema old-table))
+  (let* ((table (loaded-test-table))
+	 (old-schema (table-schema table))
 	 (new-schema (list (second old-schema)
 			   (fourth old-schema)))
-	 (extractor (extractor old-table new-schema)))
-    (assert-numerical-equal '(3.6 0.2) (funcall extractor 3))))
+	 (extractor (extractor new-schema)))
+    (assert-numerical-equal '(3.6 0.2) (funcall extractor
+						(nested-vectors:nth-row
+						 (table-data table)
+						 3)))))
+
+(defmethod project-columns ((old-schema list) (old-data nested-vector)
+			    (new-schema list))
+  "Return a new data-table that contains columns specified by SCHEMA"
+  (let ((new-data (make-nested-vector (list 0 (length new-schema)))))
+    (loop
+       :for new-col-schema in new-schema
+       :for new-col-schema-index from 0
+       :for col-name = (column-name new-col-schema)
+       :for old-col-schema-index = (position col-name old-schema :key #'column-name)
+       :when old-col-schema-index
+       :do (setf (nested-vectors:nth-column new-data new-col-schema-index)
+		 (nested-vectors:nth-column old-data old-col-schema-index)))
+    new-data))
+
+(define-test project-columns
+  "The new table consists of columns 0 and 2 of the old table"
+  (let* ((cm-table (loaded-test-table))
+	 (table (table-data cm-table))
+	 (schema (table-schema cm-table))
+	 (new-schema (list (first schema) (third schema)))
+	 (new-table (project-columns schema table new-schema)))
+    (assert-numerical-equal (nested-vectors:nth-column table 0)
+			    (nested-vectors:nth-column new-table 0))
+    (assert-numerical-equal (nested-vectors:nth-column table 2)
+			    (nested-vectors:nth-column new-table 1))))
 
 
+(defgeneric extract-schema (column-names schema)
+  (:documentation
+"Return a new schema, containing columns specified by column names")
+  (:method (column-names (schema list))
+    (loop :for c in column-names
+     :collect (find-column-schema c schema))))
 
-(defun extract-schema (column-names schema)
-  (loop :for c in column-names
-     :collect (find-column-schema c schema)))
 
-
-(defun pick-rows (old-data row-index table-schema)
+#+skip(defun pick-rows (rows table-schema)
   "Create a new column-major-table data structure.  Fill it with rows
 specified by row-index"
   (let* ((row-count (length row-index))
 	 (col-count (length old-data))
-	 (new-data (make-array col-count)))
+	 (new-data (make-nested-vector `(0 ,col-count))))
     (dotimes (j col-count)
       (setf (aref new-data j)
 	    (make-vector row-count (nth j table-schema)))
@@ -56,16 +78,21 @@ specified by row-index"
 		   (vvref old-data old-index j))))
     new-data))
 
-(defmethod restrict-rows (data (where function) table-schema)
+(defmethod restrict-rows ((data nested-vector) (where function))
   "Return a new data table whose rows satisfy the WHERE function
 
-WHERE is a function of one argument: the table row index"
-  (let* ((row-count (vector-length (aref data 0))))
-    (let ((indices 
-	   (loop :for i below row-count
-	      :when (funcall where i)
-	      :collect i)))
-      (pick-rows data indices table-schema))))
+WHERE is a function of one argument: the table row accessor"
+  (let* ((column-count (nested-vectors:column-count data))
+	 (new-data
+	  (make-nested-vector (list 0 column-count)
+			      :adjustable-row-count t)))
+    (iter:iter
+      (iter:for row :in-nv-row data)
+      (when (funcall where row)
+	(nested-vectors:add-row new-data
+	      (nested-vectors:row-contents row))))
+    new-data))
+    
 
 (define-test restrict-rows-1
   "Test row restriction by selecting every even row"
@@ -74,15 +101,18 @@ WHERE is a function of one argument: the table row index"
     (let ((col-count (column-count table))
 	  (row-count (row-count table))
 	  (new-table-data
-	   (restrict-rows table-data (lambda (i)
-				  (evenp i))
-			  (table-schema table)))
+	   (restrict-rows table-data
+			  (lambda (row)
+			    (evenp (nested-vectors:row-index row)))))
 	  (target-rows '(0 2 4 6 8)))
-      (assert-equal col-count (length new-table-data) "column count")
+      (assert-equal col-count (nested-vectors:column-count new-table-data)
+		    "column count")
       (assert-equal (/ row-count 2)
-		    (vector-length (aref new-table-data 0)) "row count")
+		    (nested-vectors:row-count new-table-data)
+		    "row count")
       (assert-true
-       (vv-table-equal table-data new-table-data :target-rows target-rows)
+       (compare-nested-vectors table-data new-table-data
+			       :target-rows target-rows)
        "table content"))))
 
 (define-test restrict-rows-2
@@ -93,38 +123,16 @@ WHERE is a function of one argument: the table row index"
     (let ((col-count (column-count table))
 	  (row-count (row-count table))
 	  (new-table-data
-	   (restrict-rows table-data (lambda (i)
-				  (equal 1.4 (vvref table-data i 2)))
-			  (table-schema table))))
-      (assert-equal col-count (length new-table-data))
-      (assert-equal 4 (vector-length (aref new-table-data 0)))
+	   (restrict-rows table-data (lambda (row)
+				       (equal 1.4 (vrref row 2))))))
+      (assert-equal col-count (nested-vectors:column-count new-table-data))
+      (assert-equal 4 (nested-vectors:row-count new-table-data))
       (assert-true
-       (vv-table-equal table-data new-table-data :target-rows target-rows)))))
+       (compare-nested-vectors table-data new-table-data :target-rows target-rows)))))
 
-(defmethod project-columns (table-schema old-data (schema cons))
-  "Return a new data-table that contains columns specified by SCHEMA"
-  (let ((new-data (init-vv-array (length schema))))
-    (loop
-       :for new-col across new-data
-       :for new-col-schema in schema
-       :for col-name = (slot-value new-col-schema 'name)
-       :for old-col-index = (position col-name table-schema :key #'column-name)
-       :for j upfrom 0
-       :when old-col-index
-       :do (setf (aref new-data j) (aref old-data old-col-index)))
-    new-data))
 
-(define-test project-columns
-  "The new table consists of columns 0 and 2 of the old table"
-  (let* ((cm-table (loaded-test-table))
-	 (table (table-data cm-table))
-	 (schema (table-schema cm-table))
-	 (new-schema (list (first schema) (third schema)))
-	 (new-table (project-columns schema table new-schema)))
-    (assert-numerical-equal (aref table 0) (aref new-table 0))
-    (assert-numerical-equal (aref table 2) (aref new-table 1))))
 
-(defun row-equality-tester/cmt (data column-names table-schema)
+(defun row-equality-tester (column-names table-schema)
   "Return a function of two arguments: two row indices, i1 and i2
 
 This function returns T if the contents of rows I1 and I2 of DATA are
@@ -143,11 +151,11 @@ by the caller routine."
 					    :key #'column-name)
 			      'equality-predicate) :into tests
 	 :finally (return (values indices tests)))
-    #'(lambda (i1 i2)
-        (loop for j in col-indices and test in tests
-           always (funcall test (vvref data i1 j) (vvref data i2 j))))))
+    (lambda (row1 row2)
+      (loop for j in col-indices and test in tests
+	   always (funcall test (vrref row1 j) (vrref row2 j))))))
 
-(define-test row-equality-tester/cmt
+(define-test row-equality-tester
   "PETAL-LENGTH column has several values 1.4 an PETAL-WIDTH has
 several values 0.2 We test duplication against those two columns
 
@@ -157,12 +165,17 @@ Thus rows 0 and 3 are duplicates
   (let* ((cm-table (loaded-test-table))
 	 (data (table-data cm-table))
 	 (schema (table-schema cm-table))
-	 (row-equality-tester (row-equality-tester/cmt data '(petal-length petal-width) schema)))
-    (assert-true (not (funcall row-equality-tester 0 1)))
-    (assert-true (funcall row-equality-tester 0 3))
-    (assert-true (not (funcall row-equality-tester 0 5)))))
+	 (row-equality-tester (row-equality-tester '(petal-length petal-width) schema)))
+    (assert-true (not (funcall row-equality-tester
+			       (nested-vectors:nth-row data 0)
+			       (nested-vectors:nth-row data 1))))
+    (assert-true (funcall row-equality-tester (nested-vectors:nth-row data 0)
+			  (nested-vectors:nth-row data 3)))
+    (assert-true (not (funcall row-equality-tester (nested-vectors:nth-row data 0)
+			       (nested-vectors:nth-row data 5))))))
 
-(defun distinct-rows (data column-names table-schema)
+(defgeneric distinct-rows (data column-names table-schema)
+  (:documentation
   "Remove duplicate rows from data
 
 Remove rows from DATA that are duplicates in columns identified by
@@ -171,16 +184,20 @@ COLUMN-NAMES
 TABLE-SCHEMA contains DATA's column names and equality testers.
 
 DATA and SCHEMA must be congruent.  This has to be insured by the
-caller routine"
-  (let ((row-count (vector-length (aref data 0))))
-    (let ((distinct-row-indices
-	   (loop :for i below row-count
-	      :collect i)))
-      (setf distinct-row-indices
-	    (delete-duplicates distinct-row-indices
-			 :test (row-equality-tester/cmt
-				data column-names table-schema)))
-      (pick-rows data distinct-row-indices table-schema))))
+caller routine")
+  (:method ((data nested-vector) column-names (table-schema list))
+  (let* ((rows (iter:iter
+		(iter:for row :in-nv-row data)
+		(iter:collect row)))
+	 (distinct-rows (delete-duplicates
+			 rows
+			 :test (row-equality-tester column-names table-schema)))
+	 (new-data (make-nested-vector (list 0 (length table-schema))
+				       :adjustable-row-count t)))
+    (loop for row in distinct-rows
+	 do (nested-vectors:add-row new-data
+				    (nested-vectors:row-contents row)))
+    new-data)))
 
 
 
@@ -193,40 +210,51 @@ rows returned in the first two tests"
 	 (schema (table-schema cm-table)))
     (let ((target-rows '(1 4 7 9)))
       (assert-true
-       (vv-table-equal data
-			  (distinct-rows data '(petal-length) schema)
-			  :target-rows target-rows)))
+       (compare-nested-vectors
+	data
+	(distinct-rows data '(petal-length) schema)
+	:target-rows target-rows)))
     (let ((target-rows '(4 5 8 9)))
       (assert-true
-       (vv-table-equal data
+       (compare-nested-vectors
+	data
 			  (distinct-rows data '(petal-width) schema)
 			  :target-rows target-rows)))
     (let ((target-rows '(1 4 5 7 8 9)))
       (assert-true
-       (vv-table-equal data
+       (compare-nested-vectors data
 			  (distinct-rows data '(petal-width petal-length) schema)
 			  :target-rows target-rows)))))
   
 
-(defun row-comparator/cmt (data column-names table-schema)
+(defun row-comparator (column-names table-schema)
+  "Return a function of two arguments: two row indices, i1 and i2
+
+This function returns T if the contents of rows I1 and I2 of DATA are
+equal in all the columns specified by COLUMN-NAMES
+
+TABLE-SCHEMA contains the column schema that is used to identify the
+data columns for sorting, and also the equality testers.
+
+TABLE-SCHEMA and DATA have to be compatible.  That should be ensured
+by the caller routine."
   (multiple-value-bind (col-indices tests)
       (loop :for column-name in column-names
 	 :collect (position column-name table-schema
 			    :key #'column-name) :into indices
-	 :collect (comparator (find column-name table-schema
-				    :key #'column-name)) :into tests
+	 :collect (slot-value (find column-name table-schema
+				    :key #'column-name)
+			      'comparator) :into tests
 	 :finally (return (values indices tests)))
-    #'(lambda (i1 i2)
-	(loop
-	   :for j in col-indices
-	   :for test in tests
-	   :for value1 = (vvref data i1 j)
-	   :for value2 = (vvref data i2 j)
-	   :when (funcall test value1 value2) :return t
-	   :when (funcall test value2 value1) :return nil
-	   :finally (return nil)))))
+    (lambda (row1 row2)
+      (loop :for j in col-indices :and test in tests
+	 :for value1 = (vrref row1 j)
+	 :for value2 = (vrref row2 j)
+	 :when (funcall test value1 value2) :return t
+	 :when (funcall test value2 value1) :return nil
+	 :finally (return nil)))))
 
-(define-test row-comparator/cmt
+(define-test row-comparator
   "PETAL-LENGTH column has several values 1.4 an PETAL-WIDTH has
 several values 0.2 We test comparisons against those two columns.
 
@@ -235,27 +263,45 @@ The second three in PETAL-LENGTH and PETAL-WIDTH"
   (let* ((cm-table (loaded-test-table))
 	 (data (table-data cm-table))
 	 (schema (table-schema cm-table)))
-    (let ((row-comparator (row-comparator/cmt data '(petal-length) schema)))
-      (assert-true (not (funcall row-comparator 0 1)))
-      (assert-true (funcall row-comparator 0 2))
-      (assert-true (not (funcall row-comparator 0 3))))
-    (let ((row-comparator (row-comparator/cmt data '(petal-length petal-width) schema)))
-      (assert-true (funcall row-comparator 0 2))
-      (assert-true (not (funcall row-comparator 0 3)))
-      (assert-true (funcall row-comparator 0 5)))))
+    (let ((row-comparator (row-comparator '(petal-length) schema)))
+      (assert-true (not (funcall row-comparator
+				 (nested-vectors:nth-row data 0)
+				 (nested-vectors:nth-row data 1))))
+      (assert-true (funcall row-comparator
+			    (nested-vectors:nth-row data 0)
+			    (nested-vectors:nth-row data 2)))
+      (assert-true (not (funcall row-comparator
+				 (nested-vectors:nth-row data 0)
+				 (nested-vectors:nth-row data 3)))))
+    (let ((row-comparator (row-comparator '(petal-length petal-width) schema)))
+      (assert-true (funcall row-comparator
+			    (nested-vectors:nth-row data 0)
+			    (nested-vectors:nth-row data 2)))
+      (assert-true (not (funcall row-comparator
+				 (nested-vectors:nth-row data 0)
+				 (nested-vectors:nth-row data 3))))
+      (assert-true (funcall row-comparator
+			    (nested-vectors:nth-row data 0)
+			    (nested-vectors:nth-row data 5))))))
 
-(defun sorted-rows (data column-names table-schema)
-  (let ((row-count (vector-length (aref data 0)))
-	#+skip (col-count (length data)))
-    (let ((sorted-row-index
-	   (loop :for i below row-count
-	      :collect i))
-	  #+skip (new-data (init-vv-array col-count)))
-      (setf sorted-row-index
-	    (sort sorted-row-index
-		  (row-comparator/cmt
-		   data column-names table-schema)))
-      (pick-rows data sorted-row-index table-schema))))
+
+(defgeneric sorted-rows (data column-names schema)
+  (:documentation
+"Return the data structre sorted by rows")
+  (:method ((data nested-vector) column-names (table-schema list))
+  (let* ((rows (iter:iter
+		(iter:for row :in-nv-row data)
+		(iter:collect row)))
+	 (sorted-rows (sort rows
+			    (row-comparator column-names
+					    table-schema)))
+	 (new-data (make-nested-vector (list 0 (length table-schema))
+				       :adjustable-row-count t)))
+    (loop for row in sorted-rows
+	 do (nested-vectors:add-row new-data
+				    (nested-vectors:row-contents row)))
+    new-data)))		    
+
 
 
 
@@ -273,21 +319,21 @@ same as for PETAL-LENGTH"
 	 (data (table-data cm-table))
 	 (schema (table-schema cm-table)))
     (let ((target-rows '(1 0 3 5 7 2 6 8 9 4)))
-      (assert-true (vv-table-equal
+      (assert-true (compare-nested-vectors
 		    data (sorted-rows data '(petal-length) schema)
 		    :target-rows target-rows)))
     (let ((target-rows '(8 0 1 2 3 6 7 9 5 4)))
-      (assert-true (vv-table-equal
+      (assert-true (compare-nested-vectors
 		    data (sorted-rows data '(petal-width) schema)
 		    :target-rows target-rows)))
     (let ((target-rows '(1 0 3 7 5 8 2 6 9 4)))
-      (assert-true (vv-table-equal
+      (assert-true (compare-nested-vectors
 		    data (sorted-rows data '(petal-length petal-width) schema)
 		    :target-rows target-rows)))))
 
    
 (defmethod select ((table column-major-table) &key (columns t) where
-					       distinct order-by)
+						distinct order-by)
   "Return select rows from a column-major-table"
   (let ((data (table-data table))
         (old-schema (table-schema table))
@@ -295,7 +341,7 @@ same as for PETAL-LENGTH"
 
     ;; First part of the code prunes the rows and columns via explicit tests
     (when where
-      (setf data (restrict-rows data where schema)))
+      (setf data (restrict-rows data where)))
 
     (unless (eql columns 't)
       (setf schema (extract-schema (mklist columns) old-schema)
@@ -313,15 +359,23 @@ same as for PETAL-LENGTH"
       (setf data
 	    (sorted-rows data (mklist order-by) schema)))
 
+    (iter:iter
+      (iter:for column :in-nv-column data)
+      (when (subtypep (type-of column) 'array)
+	(setf column (adjust-array column (nested-vectors:row-count data)))))
+
+    (setf (adjustable-row-count data) nil)
     (let ((new-table
 	   (make-table 'column-major-table
 		       schema
 		       :table-data data)))
-      (setf (slot-value new-table 'column-count)
-	    (length (table-data new-table))
-	    (slot-value new-table 'row-count)
-	    (vector-length (aref (table-data new-table) 0))
-	    (slot-value new-table 'build-method) 'select)
+      (setf (column-count new-table)
+	    (nested-vectors:column-count data)
+	    (row-count new-table)
+	    (nested-vectors:row-count data)
+	    (build-method new-table) 'select)
+
+      (coerce-vectors-grid-type new-table)
       new-table)))
 
 
@@ -335,15 +389,15 @@ We test on the new table dimensions and contents"
     (let ((new-table
 	   (select table
 		   :columns '(sepal-length petal-length)
-		   :where (lambda (i)
-			    (= (vvref data i 2) 1.4))))
+		   :where (lambda (row)
+			    (= (vrref row 2) 1.4))))
 	  (target-rows '(0 3 5 7)))
       (assert-number-equal 2 (column-count new-table))
       (assert-number-equal 4 (row-count new-table))
       (assert-true
-       (vv-table-equal data (table-data new-table)
-		       :target-rows target-rows
-		       :target-cols '(0 2))))
+       (compare-nested-vectors data (table-data new-table)
+			       :target-rows target-rows
+			       :target-columns '(0 2))))
     (let ((new-table
 	   (select table
 		   :columns '(petal-length petal-width)
@@ -352,9 +406,9 @@ We test on the new table dimensions and contents"
       (assert-number-equal 2 (column-count new-table))
       (assert-number-equal 6 (row-count new-table))
       (assert-true
-       (vv-table-equal data (table-data new-table)
+       (compare-nested-vectors data (table-data new-table)
 		       :target-rows target-rows
-		       :target-cols '(2 3)))
+		       :target-columns '(2 3)))
       (assert-number-equal 0
 			   (slot-value (find-column-schema 'petal-length new-table)
 				       'i-column))
@@ -365,7 +419,7 @@ We test on the new table dimensions and contents"
 	   (select table
 		   :order-by 'petal-length))
 	  (target-rows '(1 0 3 5 7 2 6 8 9 4)))
-      (assert-true (vv-table-equal
+      (assert-true (compare-nested-vectors
 		    data (table-data new-table)
 		    :target-rows target-rows)))))
 

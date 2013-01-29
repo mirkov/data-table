@@ -73,9 +73,9 @@ data.")
 
 (defparameter *fa-table-before-1900/b*
   (select *fa-table*
-	  :where (lambda (i)
-		   (< (numeric-table::vvref
-		       (numeric-table::table-data *fa-table*) i 0) 1900)))
+	  :where (lambda (row)
+		   (< (nested-vectors:vrref row 0)
+		      1900)))
   "Subset of *fa-table* with data before year 1900, but explicitly
 specifying the selection function.  This implementation is problematic
 since I use the internals of numeric-table: vvref and column indices")

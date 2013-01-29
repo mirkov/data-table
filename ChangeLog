@@ -1,3 +1,26 @@
+2013-01-29  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/data-access.lisp (nth-row table-column
+	nth-column): Using nested-vectors functionality to access row and
+	column contents
+
+2013-01-28  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* init/generic-numeric-table.lisp (numeric-table): Changed
+	build-method default to from nil to null
+
+2013-01-27  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/table-building.lisp (add-row): Renamed
+	insert-row to add-row
+
+	* column-major-table/column-major-table-classes.lisp
+	(initialize-instance): Removed un-necessary slot-loading by
+	providing :initargs
+
+	* init/generic-numeric-table.lisp (numeric-table): Gave initargs
+	to column-count and row-count
+
 2013-01-26  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/fft.lisp (freq-axis): New function

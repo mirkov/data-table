@@ -24,13 +24,15 @@
 
 (defclass numeric-table ()
   ((table-data :initarg :table-data
-	  :reader table-data
+	  :accessor table-data
 	  :documentation "Table data")
    (row-count :accessor row-count
+	      :initarg :row-count
 	      :initform 0
 	      :documentation "Return number of rows
 In case of variable row count return values 'variable and max-row-count")
-   (column-count :reader column-count
+   (column-count :accessor column-count
+		 :initarg :column-count
 		 :documentation "Return number of columns
 In case of a variable column count, return values 'variable and max-column-count"
 		 :initform 0)
@@ -40,7 +42,7 @@ In case of a variable column count, return values 'variable and max-column-count
 
 - Column names
 - Functions for setting and comparing column values")
-   (build-method :reader build-method
+   (build-method :accessor build-method
 		 :initarg :build-method
 		 :initform nil
 		 :documentation "A symbol specifying the build method")
@@ -325,10 +327,10 @@ COLUMN-NAMES is a list of column names")
     (loop for c in column-names
        collect (find-column-schema c table-schema))))
 
-(defgeneric restrict-rows (table where column-schema)
+(defgeneric restrict-rows (table where)
   (:documentation "Return a new table whose rows satisfy WHERE.
 
-TABLE is the original table
+TABLE is the data table
 
 WHERE is a function that is applied to each row in turn.  The function
 argument depends on the table type.  See the documentation for each

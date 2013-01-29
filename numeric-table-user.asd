@@ -9,7 +9,8 @@
 	       "numeric-table"
 	       "anaphora"
 	       "antik"
-	       "gsll")
+	       "gsll"
+	       "nested-vectors")
   :components
   ((:module "init"
 	    :pathname #p"./user/init/"

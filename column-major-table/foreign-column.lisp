@@ -30,15 +30,16 @@ appropriate for GSLL and other C and Fortran libraries"))
   (grid:make-foreign-array 'double-float :dimensions  `(,length)))
 
 (defmethod normalize-vector :around (vector (column-schema foreign-column-schema))
+  (declare (ignore vector))
   (let ((grid:*default-grid-type* 'grid:foreign-array))
     (call-next-method)))
 
 (defmethod (setf nth-column) :before ((column-vector grid:vector-double-float)
 				      (column-index integer)
 				      (table column-major-table)
-				   &key (overwrite nil))
-  (assert (foreign-column-suptypep (nth column-index
-					(table-schema table)))
+				   &key #+skip(overwrite nil))
+  (assert (foreign-column-suptypep
+	   (nth column-index (table-schema table)))
 	  () "Column schema: ~a, must be a foreign-column-schema"))
 
 (defmethod vector-length ((vector grid:vector-double-float))
@@ -59,8 +60,7 @@ appropriate for GSLL and other C and Fortran libraries"))
     (assert-equal 2 (column-count table))
     (assert-equal 3 (row-count table))
     (assert-number-equal 4.9 (vvref (table-data table) 0 0))
-    (assert-number-equal 3.2 (vvref (table-data table) 1 1))
-    (nth-column 1 table)))
+    (assert-number-equal 3.2 (vvref (table-data table) 1 1))))
 
 
 

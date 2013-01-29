@@ -3,13 +3,13 @@
 (export '(matching-rows in empty-p not-empty-p))
 
 
-(defgeneric column-matcher (column-schema value-or-test table &optional predicate)
+(defgeneric column-matcher (column-schema value-or-test &optional predicate)
   (:documentation 
-   "Return a function of a single argument N-row, the row index.  This
+   "Return a function of a single argument, the n-th row.  This
 function returns true if the ROW's column value matches VALUE or satisfies 
 FUNCTION returns T.
 ")
-  (:method ((column-schema column-schema) value table &optional predicate)
+  (:method ((column-schema column-schema) value &optional predicate)
     "Return a function of a single argument N-row, the row index.  This
 function returns true if the ROW's column value matches VALUE.
 
@@ -24,15 +24,14 @@ to matching
 	   (predicate
 	    (aif predicate it
 		 (slot-value column-schema 'equality-predicate)))
-	   (normalized (normalize-value value column-schema))
-	   (table-data (table-data table)))
+	   (normalized (normalize-value value column-schema)))
       (assert n-column ()
 	      "Column index:~a is nil" n-column)
-      #'(lambda (N-row)
+      #'(lambda (row)
 	  (funcall predicate
-		   (vvref table-data N-row n-column)
+		   (vrref row n-column)
 		   normalized))))
-  (:method ((column-schema column-schema) (test (eql 'empty-p)) table
+  (:method ((column-schema column-schema) (test (eql 'empty-p))
 	    &optional predicate)
     "Return a function of a single argument N-row, the row index.  This
 function returns true if the columns value equals the empty value"
@@ -41,24 +40,23 @@ function returns true if the columns value equals the empty value"
 	   (predicate
 	    (aif predicate it
 		 (slot-value column-schema 'equality-predicate)))
-	   (table-data (table-data table))
 	   (normalized-empty-value
 	    (funcall (value-normalizer column-schema)
 		     (empty-value column-schema)
 		     column-schema)))
       (assert n-column ()
 	      "Column index:~a is nil" n-column)
-      #'(lambda (N-row)
+      #'(lambda (row)
 	  (funcall predicate
-		   (vvref table-data N-row n-column)
+		   (vrref row n-column)
 		   normalized-empty-value))))
-  (:method ((column-schema column-schema) (test (eql 'not-empty-p)) table
+  (:method ((column-schema column-schema) (test (eql 'not-empty-p))
 	    &optional predicate)
     "Return a function of a single argument N-row, the row index.
 This function returns true if the columns value does not equal the
 empty value"
     (declare (ignore dummy-arg))
-    (let ((predicate (column-matcher column-schema 'empty-p table predicate)))
+    (let ((predicate (column-matcher column-schema 'empty-p predicate)))
       #'(lambda (N-row)
 	  (not (funcall predicate N-row))))))
 
@@ -66,9 +64,11 @@ empty value"
   (let* ((table (loaded-test-table))
 	 (schema (table-schema table))
 	 (column-schema (find-column-schema 'sepal-length schema))
-	 (fun (column-matcher column-schema 4.7 table)))
-    (assert-true (funcall fun 1))
-    (assert-true (not (funcall fun 2)))))
+	 (fun (column-matcher column-schema 4.7)))
+    (assert-true (funcall fun (nested-vectors:nth-row (table-data table)
+						      1)))
+    (assert-true (not (funcall fun (nested-vectors:nth-row (table-data table)
+							   2))))))
 
 (defmethod column-matchers (table names-and-values)
   "Build a list of column matcher functions for TABLE
@@ -85,7 +85,7 @@ An example of a call:
        for (name value . predicate-maybe) in names-and-values
        when value
        collect (column-matcher (find-column-schema name schema)
-			       value table (car predicate-maybe)))))
+			       value (car predicate-maybe)))))
 
 (defun matching-rows (table &rest names-and-values-pairs)
   "Build a WHERE function of row index I that returns true when TABLE row
@@ -111,9 +111,11 @@ PCL p. 395"
   "We test for rows that match sepal length of 5.4 and petal width of 0.4
 
 Rows 4 and 9 have match sepal length, but only row 4 matches petal width"
-  (let ((mf (matching-rows (loaded-test-table) '(sepal-length 5.4) '(petal-width 0.4))))
-    (assert-true (funcall mf 4))
-    (assert-true (not (funcall mf 9)))))
+  (let* ((table (loaded-test-table))
+	 (data (table-data table))
+	 (mf (matching-rows table '(sepal-length 5.4) '(petal-width 0.4))))
+    (assert-true  (funcall mf (nested-vectors:nth-row data 4)))
+    (assert-true (not (funcall mf (nested-vectors:nth-row data 9))))))
 
 
 (defmethod value ((table column-major-table) &key where column-name)
@@ -128,27 +130,28 @@ The function returns nil if no value matches the WHERE and COLUMN-NAME"
   (let* ((data (table-data table))
 	 (schema (table-schema table))
 	 (column-schema (find-column-schema column-name schema))
-	 (i-row (loop for i below (row-count table)
-		   when (funcall where i)
-		   do (return i))))
-    (when i-row
-      (vvref data i-row (i-column column-schema)))))
+	 (row
+	  (iter:iter
+	    (iter:for row :in-nv-row data)
+	    (when (funcall where row)
+	      (return row)))))
+    (when row
+      (vrref row (i-column column-schema)))))
   
 
 (defun in (column source-table query-table &optional predicate)
-  "Build a WHERE function of row index I that returns true when the
+  "Build a WHERE function of row that returns true when the
 value in COLUMN of QUERY-TABLE is found in COLUMN of SOURCE-TABLE"
   ;; Offers the same functionality as PCL's In function (p. 396).  But
   ;; the structure is completely different.  The interface is also
   ;; different.
-  (let ((target-schema (find-column-schema column query-table))
-	(target-data (table-data query-table)))
+  (let ((target-schema (find-column-schema column query-table)))
     (unless predicate
       (setf predicate
 	    (equality-predicate target-schema)))
     (let ((j-target (i-column target-schema)))
-      (lambda (i-row)
-	(let ((target-value (vvref target-data i-row j-target)))
+      (lambda (row)
+	(let ((target-value (vrref row j-target)))
 	  ;; Use iter instead of `find' or `loop' in order to
 	  ;; accomodate grids as well as arrays.
 	  (iter:iter
@@ -172,11 +175,12 @@ value in COLUMN of QUERY-TABLE is found in COLUMN of SOURCE-TABLE"
 	 (schema (table-schema table))
 	 (column-schema (find-column-schema column-name schema))
 	 ;; we now select the matching rows
-	 (i-row (loop for i below (row-count table)
-		   when (funcall where i)
-		   do (return i))))
-    (when i-row
-      (setf (vvref data i-row (i-column column-schema))
+	 (row (iter:iter
+		(iter:for row :in-nv-row data)
+		   (when (funcall where row)
+		     (return row)))))
+    (when row
+      (setf (vrref row (i-column column-schema))
 	    (funcall (value-normalizer column-schema) value column-schema)))))
 
 

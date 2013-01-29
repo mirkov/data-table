@@ -137,9 +137,11 @@ GSLL-OTHER-INTERPOLATION
 	 (table-schema (table-schema column-table)))
     (setf (interpolation-data y-schema)
 	  (gsll:make-spline (gsll-interpolation-method y-schema)
-			    (aref (table-data column-table)
-				  (position x-name table-schema :key #'column-name))
-			    (aref (table-data column-table)
+			    (nested-vectors:nth-column
+			     (table-data column-table)
+			     (position x-name table-schema :key #'column-name))
+			    (nested-vectors:nth-column
+			     (table-data column-table)
 				  (position y-name table-schema :key #'column-name))))))
 
 (defmethod init-column-interp ((column-table numeric-table)
@@ -152,9 +154,9 @@ GSLL-OTHER-INTERPOLATION
     (setf (interpolation-data y-schema)
 	  (gsll:make-interpolation
 	   (gsll-interpolation-method y-schema)
-	   (aref (table-data column-table)
+	   (nested-vectors:nth-column (table-data column-table)
 		 (position x-name table-schema :key #'column-name))
-	   (aref (table-data column-table)
+	   (nested-vectors:nth-column (table-data column-table)
 		 (position y-name table-schema :key #'column-name))))))
 
 #+skip(defgeneric interp-column (column value table)
@@ -179,11 +181,11 @@ It is either its name or its schema")
 			  (y-column-schema gsll-other-interpolation)
 			  value)
   (let* ((y-index (i-column y-column-schema))
-	 (y-data (aref (table-data column-table) y-index))
+	 (y-data (nested-vectors:nth-column (table-data column-table) y-index))
 	 (x-name (col-independent-var y-column-schema))
 	 (x-column-schema (find-column-schema x-name column-table))
 	 (x-index (i-column x-column-schema))
-	 (x-data (aref (table-data column-table) x-index)))
+	 (x-data (nested-vectors:nth-column (table-data column-table) x-index)))
     (gsll:evaluate (interpolation-data y-column-schema)
 		   value
 		   :xa x-data

@@ -1,8 +1,8 @@
 (in-package :numeric-table)
 
-(export '(row-by-row insert-row coerce-vectors-grid-type vector-length))
+(export '(row-by-row add-row coerce-vectors-grid-type vector-length))
 
-(defmethod insert-row ((row list) (table column-major-table))
+(defmethod add-row ((row list) (table column-major-table))
   "Insert a new table row
 
 If the table is bare, initialize it and specify the build method."
@@ -15,38 +15,37 @@ If the table is bare, initialize it and specify the build method."
 	       (length row) (length table-schema))
     (cond 
       ((null build-method)
-       (setf build-method 'row-by-row)
-       (dotimes (i column-count)
-	 (setf (aref table-data i) (make-array 0 :adjustable t :fill-pointer 0))))
+       (setf build-method 'row-by-row
+	     table-data
+	     (make-nested-vector `(0 ,(column-count table))
+				 :adjustable-row-count t
+				 :adjustable-column-count nil)))
       ((eql build-method 'row-by-row))
       (t 
        (error "Table build-method:~a is not defined as row-by-row"
 	      build-method)))
-    (loop
-       :for value in row
-       :for table-column across table-data
-       :for column-schema in table-schema
-       :for column-index from 0
-       :do (vector-push-extend (normalize-value value column-schema)
-			     table-column))
-    (incf row-count)
-    (dotimes (i column-count)
-      (adjust-array (aref table-data i) row-count))))
+    (let ((normalized-row
+	   (mapcar (lambda (value column-schema)
+		     (funcall (value-normalizer column-schema)
+			      value column-schema))
+		   row table-schema)))
+      (nested-vectors:add-row table-data normalized-row))
+    (incf row-count)))
 
-(define-test insert-row
+(define-test add-row
   "Test dimensions of table that was build row-by-row"
   (let ((table (test-column-table)))
     (dotimes (i-row 3)
-      (insert-row
+      (add-row
        (loop for i-column below 5
 	  collect (aref *flower-data* i-row i-column))
        table))
-    (assert-equal 3 (row-count table))
-    (assert-equal 5 (column-count table))
-    (assert-number-equal 4.9 (vvref (table-data table) 0 0))
-    (assert-number-equal 3.2 (vvref (table-data table) 1 1))
-    (assert-number-equal 3.1 (vvref (table-data table) 2 1))
-    (assert-number-equal 1.3 (vvref (table-data table) 1 2))))
+  (assert-equal 3 (row-count table))
+  (assert-equal 5 (column-count table))
+  (assert-number-equal 4.9 (vvref (table-data table) 0 0))
+  (assert-number-equal 3.2 (vvref (table-data table) 1 1))
+  (assert-number-equal 3.1 (vvref (table-data table) 2 1))
+  (assert-number-equal 1.3 (vvref (table-data table) 1 2))))
 
 
 
@@ -84,26 +83,28 @@ VECTOR is either a CL vector or a GRID vector")
     (column-vector
      (column-index integer)
      (column-table column-major-table)
-     &key (overwrite nil))
+     &key #+skip(overwrite nil))
   (with-slots (build-method table-data column-count row-count table-schema)
       column-table
-    (assert (or (null build-method)
-		(eq 'set-column build-method)) ()
-		"Table build method, ~a, must be either NULL or SET-COLUMN"
-		build-method)
-    (unless build-method
-      (setf build-method 'set-column
-	    row-count (vector-length column-vector)))
-    (assert (< column-index column-count) ()
-	    "Column index ~a is greater than number of columns ~a"
-	    column-index column-count)
-    (when
-	(and (not (null (aref table-data column-index) ))
-	     (not overwrite))
-      (error "Attempting to overwrite column ~a" column-index))
-    (assert (= (vector-length column-vector) row-count) ()
-	    "The new column length ~a does not match table row count ~a"
-	    (vector-length column-vector) row-count)))
+    (cond
+      ((null build-method)
+       (setf build-method 'set-column
+	     row-count (sequence-length column-vector)
+	     table-data
+	     (make-nested-vector `(,row-count ,column-count))))
+      ((equal build-method 'set-column)
+       (assert (< column-index column-count) ()
+	       "Column index ~a is greater than number of columns ~a"
+	       column-index column-count)
+       #+skip(when
+		 (and (not (null (aref table-data column-index) ))
+		      (not overwrite))
+	       (error "Attempting to overwrite column ~a" column-index))
+       (assert (= (sequence-length column-vector) row-count) ()
+	       "The new column length ~a does not match table row count ~a"
+	       (sequence-length column-vector) row-count))
+      (t (error "Table build method, ~a, must be either NIL or SET-COLUMN"
+		build-method)))))
 
 (defgeneric normalize-vector (vector column-schema)
   (:documentation
@@ -117,22 +118,23 @@ type of COLUMN-SCHEMA")
     (let ((value-normalizer (slot-value column-schema 'value-normalizer)))
       (grid:map-grid :source vector
 		     :destination-specification
-		     (list (list grid:*default-grid-type* (vector-length vector))
+		     (list (list grid:*default-grid-type* (sequence-length vector))
 			   (default-type column-schema))
 		     :element-function (lambda (value)
 					 (funcall value-normalizer
 						  value column-schema))))))
 
+
 (defmethod (setf nth-column) (vector
 			      (column-index integer)
 			      (table column-major-table)
-			      &key (overwrite nil))
+			      &key #+skip(overwrite nil))
   (declare (ignore overwrite))
   (with-slots (build-method table-data column-count row-count table-schema)
       table
-    (setf (aref table-data column-index)
+    (setf (nested-vectors:nth-column table-data column-index)
 	  (normalize-vector vector (nth-column-schema column-index
-						   table)))))
+						      table)))))
 
 (define-test set-nth-column
   "Test dimesions of table that was build column-by-column"
@@ -154,18 +156,18 @@ type of COLUMN-SCHEMA")
 (defmethod (setf table-column) (vector
 				(column-name symbol)
 				(table column-major-table)
-			     &key (overwrite nil))
+			     &key #+skip(overwrite nil))
   (let ((column-index
 	 (position column-name (column-names table))))
-    (setf (nth-column column-index table :overwrite overwrite) vector)))
+    (setf (nth-column column-index table #+skip :overwrite #+skip overwrite) vector)))
 
 (defmethod (setf table-column) (vector
 				(column-schema column-schema)
 				(table column-major-table)
-				&key (overwrite nil))
+				&key #+skip(overwrite nil))
   (let ((column-index
 	 (position column-schema (table-schema table))))
-    (setf (nth-column column-index table :overwrite overwrite) vector)))
+    (setf (nth-column column-index table #+skip :overwrite #+skip overwrite) vector)))
 
 
 (define-test setf-table-column
@@ -209,9 +211,20 @@ format.
 	(table-data (table-data table)))
     (loop :for i :upfrom 0
        :for column-schema :in table-schema
-       :do (setf (aref table-data i)
-		 (coerce-vector-grid-type (aref table-data i)
-				 	  column-schema)))))
+       :do (setf (nested-vectors:nth-column table-data i)
+		 (coerce-vector-grid-type
+		  (nested-vectors:nth-column table-data i)
+				 	  column-schema))))
+  table)
+
+
+(defmethod adjust-vectors-length ((table column-major-table))
+  (let ((table-data (table-data table))
+	(row-count (row-count table)))
+    (iter:iter
+      (iter:for column :in-nv-column table-data)
+      (when (subtypep (type-of column) 'array)
+	(setf column (adjust-array column row-count))))))
 
 (defmethod init-storage ((table column-major-table))
   "Initialize storage of a column-major-table"
