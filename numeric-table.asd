@@ -29,6 +29,7 @@
 	     (:file "matching-functions")
 	     (:file "data-access")
 	     (:file "cmt-io")
+	     (:file "cmt-row")
 	     (:file "foreign-column")
 	     (:file "fitting+interpolation")
 	     (:file "interpolated-column")
