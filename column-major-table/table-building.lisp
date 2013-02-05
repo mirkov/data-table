@@ -16,10 +16,8 @@ If the table is bare, initialize it and specify the build method."
     (cond 
       ((null build-method)
        (setf build-method 'row-by-row
-	     table-data
-	     (make-nested-vector `(0 ,(column-count table))
-				 :adjustable-row-count t
-				 :adjustable-column-count nil)))
+	     table-data (make-nested-vector `(0 ,column-count)
+					    :adjustable-row-count t)))
       ((eql build-method 'row-by-row))
       (t 
        (error "Table build-method:~a is not defined as row-by-row"
@@ -40,12 +38,12 @@ If the table is bare, initialize it and specify the build method."
        (loop for i-column below 5
 	  collect (aref *flower-data* i-row i-column))
        table))
-  (assert-equal 3 (row-count table))
-  (assert-equal 5 (column-count table))
-  (assert-number-equal 4.9 (vvref (table-data table) 0 0))
-  (assert-number-equal 3.2 (vvref (table-data table) 1 1))
-  (assert-number-equal 3.1 (vvref (table-data table) 2 1))
-  (assert-number-equal 1.3 (vvref (table-data table) 1 2))))
+    (assert-equal 3 (row-count table))
+    (assert-equal 5 (column-count table))
+    (assert-number-equal 4.9 (vvref (table-data table) 0 0))
+    (assert-number-equal 3.2 (vvref (table-data table) 1 1))
+    (assert-number-equal 3.1 (vvref (table-data table) 2 1))
+    (assert-number-equal 1.3 (vvref (table-data table) 1 2))))
 
 
 
@@ -88,10 +86,14 @@ VECTOR is either a CL vector or a GRID vector")
       column-table
     (cond
       ((null build-method)
-       (setf build-method 'set-column
-	     row-count (sequence-length column-vector)
-	     table-data
-	     (make-nested-vector `(,row-count ,column-count))))
+       (setf build-method 'set-column)
+       (if (zerop row-count)
+	   (setf row-count (sequence-length column-vector)
+		 table-data
+		 (make-nested-vector `(,row-count ,column-count)))
+	   (assert (= (sequence-length column-vector) row-count) ()
+		   "New column length:~a much match table row count:~a"
+		   (sequence-length column-vector) row-count)))
       ((equal build-method 'set-column)
        (assert (< column-index column-count) ()
 	       "Column index ~a is greater than number of columns ~a"

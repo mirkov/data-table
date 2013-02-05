@@ -1,5 +1,7 @@
 (in-package :numeric-table)
 
+(export '(copy-columns with-columns))
+
 (defmethod table-size ((table column-major-table))
   (list (row-count table) (column-count table)))
 
@@ -49,3 +51,25 @@
 			 (table column-major-table))
   "Return column contents of column at COLUMN-INDEX position"
   (nested-vectors:nth-column (table-data table) column-index))
+
+
+(defmethod copy-columns ((target-table column-major-table)
+			(source-table column-major-table)
+			&rest COLUMNS)
+  "Copy contents of columns from SOURCE-TABLE to TARGET-TABLE
+"
+  (loop for column in columns
+       do (setf (table-column column target-table)
+		(table-column column source-table))))
+
+(define-test with-columns
+  (with-columns (a b c) table
+    (+ 2 3)))
+
+(defmacro with-columns ((&rest column-names) table-form &body body)
+  "Expand into a body where column-name refers to (table-column column-name table)"
+  (let ((table-ref (gensym)))
+  `(let ((,table-ref ,table-form))
+     (symbol-macrolet (,@(loop :for column-name :in column-names
+			      :collect `(,column-name (table-column ',column-name ,table-ref))))
+       ,@body))))

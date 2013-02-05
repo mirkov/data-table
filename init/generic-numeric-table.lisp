@@ -198,6 +198,18 @@ sub-classes"))
    (default-type :initform 'symbol))
   (:documentation "Column schema for storing symbols"))
 
+(defclass list-column-schema (column-schema)
+  ((equality-predicate :reader equality-predicate
+		       :initform (lambda (list1 list2)
+				   (every #'identity (mapcar #'equal list1 list2))))
+   (comparator :initform (lambda (list1 list2)
+			   (declare (ignore list1 list2))
+			   (error "comparator is not defined for LIST column schema")))
+   (default-type :initform 'list))
+  (:documentation "Column schema for storing lists This schema can
+compare lists for equality using EQUAL, but cannot compare them for
+ordering"))
+
 (defclass object-column-schema (column-schema)
   ((equality-predicate :initform #'eq
 		       :documentation
@@ -241,6 +253,7 @@ they are of the same class")
 (add-column-schema-short+long-names 'string 'string-column-schema
 				    'number 'number-column-schema
 				    'symbol 'symbol-column-schema
+				    'list 'list-column-schema
 				    'object 'object-column-schema
 				    'function 'function-column-schema)
 
@@ -292,7 +305,11 @@ SCHEMA can be a COLUMN-SCHEMA or (when implemented) ROW-SCHEMA")
 
 
 (defgeneric init-storage (table)
-  (:documentation "Initialize table's storage"))
+  (:documentation "Initialize table's storage
+
+Use the information stored in row-count and column-count to initialize
+the storage.
+"))
 
 
 (defgeneric find-column-schema (column-name table-or-table-schema)

@@ -1,3 +1,38 @@
+2013-02-03  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/data-access.lisp (copy-columns)
+	(with-columns): New function and macro
+
+	* column-major-table/column-major-table-classes.lisp (make-table):
+	Improved keyword handling to prevent row-count from being set to
+	nil
+	(column-major-table): Set init-value of row-count to 0
+
+	* column-major-table/table-building.lisp (setf-nth-column
+	add-row): Changed code logic when setting a column or row for the
+	first time.  I now take into account that the storage was
+	initialized when the table was created.
+
+	* column-major-table/column-major-table-classes.lisp (make-table):
+	Removing table-data from class initialization protocol.
+	(initialize-instance): Added data storage initialization
+
+2013-02-02  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/column-major-table-classes.lisp (make-table):
+	Added column-count as argument
+
+2013-02-01  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* init/generic-numeric-table.lisp (list-column-schema): Added a
+	new column schema for storing lists
+
+2013-01-30  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/column-major-table-classes.lisp (initialize-instance)
+	(make-table): Moved table-data initialization into
+	initialize-instance :after
+
 2013-01-29  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/data-access.lisp (nth-row table-column

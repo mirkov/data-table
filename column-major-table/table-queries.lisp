@@ -367,12 +367,10 @@ same as for PETAL-LENGTH"
     (setf (adjustable-row-count data) nil)
     (let ((new-table
 	   (make-table 'column-major-table
-		       schema
-		       :table-data data)))
-      (setf (column-count new-table)
-	    (nested-vectors:column-count data)
-	    (row-count new-table)
-	    (nested-vectors:row-count data)
+		       schema)))
+      (setf (table-data new-table) data
+	    (column-count new-table) (nested-vectors:column-count data)
+	    (row-count new-table) (nested-vectors:row-count data)
 	    (build-method new-table) 'select)
 
       (coerce-vectors-grid-type new-table)

@@ -6,7 +6,7 @@
 
 ;;; Classes and methods for instantiating column-major tables
 (defclass column-major-table (numeric-table)
-  ()
+  ((row-count :initform 0))
   (:documentation "Table that contains multiple columns
 
 The table can be expanded by adding both rows and columns"))
@@ -17,31 +17,26 @@ The table can be expanded by adding both rows and columns"))
 
 (defmethod initialize-instance :after ((self column-major-table)
 				       &key
-					 table-data 
 					 &allow-other-keys)
-  (setf (column-count self) (length (table-schema self))
-	(table-data self)
-	(when table-data
-	    (progn
-	      (assert (typep table-data 'nested-vector))
-	      (assert (= (nested-vectors:column-count table-data)
-			 (column-count self)))
-	      table-data)
-	    )))
+  #+skip(print 'hello)
+  (with-slots (row-count column-count table-data table-schema) self
+    (setf column-count (length table-schema))
+    (setf table-data
+	  (make-nested-vector (list row-count column-count))))
+    #+skip(print 'good-bye))
 
 (defmethod make-table ((type (eql 'column-major-table)) schema
 		       &key build-method data-source data-author
-			 table-data)
-  (let* ((table-data-1
-	  (or table-data
-	      (make-nested-vector (list 0 (length schema)))))
-	 (table (make-instance type
-			       :table-data table-data-1
-			       :table-schema schema
-			       :build-method build-method
-			       :data-source data-source
-			       :data-author data-author)))
-    table))
+			 #+skip table-data row-count)
+  (let (kwds)
+    (when row-count (setf (getf kwds :row-count) row-count))
+    (let ((table (apply #'make-instance type
+			      :table-schema schema
+			      :build-method build-method
+			      :data-source data-source
+			      :data-author data-author
+			      kwds)))
+      table)))
 
 
 
@@ -90,8 +85,10 @@ name and column type"
 
 
 
-(defun test-column-table ()
-  (make-table 'column-major-table (test-table-schema)))
+(defun test-column-table (&optional rows)
+  (if rows
+      (make-table 'column-major-table (test-table-schema) :row-count rows)
+      (make-table 'column-major-table (test-table-schema))))
 
 (define-test make-table
   "Lightly test that we can create a table object and load a table

@@ -28,6 +28,46 @@
    For examples of use of column-major-tables see [[file:user/example1/README.org][this file]], and
    other lisp and png files in that directory.
 
+   I am currently investigating the following use of numeric table:
+   - numeric table as a data frame to hold multiple columns of data
+   - A recursive structure of data frame to hold multiple data
+     frames, all related by a common thread
+   - data frames and recursive data frames as a basic data structure
+     for the grammar of graphics
+   - These topics are discussed in [[file:doc/data-frames%2Bgog.org][this document]].
+
+
+*** Initialization of a column-major-table
+
+    The table contents can be specified in three manners:
+    - ~add-row~, row-by-row method
+    - ~set-column~, set-column method
+    - ~add-column~ *not implemented*
+    - ~set-value~, any
+
+      
+    The table can be initialized as follows
+    #+BEGIN_SRC lisp
+      (make-table 'column-major-table schema)
+      (make-table 'column-major-table schema row-count)
+    #+END_SRC
+    The first method initializes the table so that ~add-row~ and
+    ~set-column~ are operational.  In the first method, internally,
+    spine is initialized with empty adjustable vectors.  These are
+    extended as rows are added setting the mode to row-by-row, or
+    overwritten by columns, setting the mode to set-column.
+
+    The second method initializes the table so that ~set-column~ and
+    ~set-value~ are operational.  Internally, the storage is
+    initialized to a series of empty column vectors.  ~set-value~ can
+    operate on them.
+
+    The table cannot be created pre-loaded with data.  This effect
+    can be achieved by a user function or macro that creates a new
+    table and then inserts contents into it.
+
+**** Internal operation
+     
 * Documentation
 
   Documentation is maintained for users and separately for
