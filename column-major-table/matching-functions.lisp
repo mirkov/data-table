@@ -1,6 +1,6 @@
 (in-package :numeric-table)
 
-(export '(matching-rows in empty-p not-empty-p))
+(export '(matching-rows in #+skip in-1 empty-p not-empty-p))
 
 
 (defgeneric column-matcher (column-schema value-or-test &optional predicate)
@@ -159,6 +159,44 @@ value in COLUMN of QUERY-TABLE is found in COLUMN of SOURCE-TABLE"
 	    (when (funcall predicate target-value element)
 	      (return t))
 	    (iter:finally (return nil))))))))
+
+#+skip(defun in-1 (column-name table
+	     &optional
+	       (predicate (equality-predicate
+			   (find-column-schema column-name table))))
+  "Return a function of a single variable, a table row accessor, that
+returns true when the rows's column value matches the column-value of
+the table
+"
+  (let ((values (table-column column-name table)))
+    (lambda (row)
+      (print row)
+      (let ((target-value (value row column-name)))
+	;; Use iter instead of `find' or `loop' in order to
+	;; accomodate grids as well as arrays.
+	(iter:iter
+	  (iter:for element :vector-element values)
+	  (when (funcall predicate target-value element)
+	    (return t))
+	  (iter:finally (return nil)))))))
+
+#+skip(define-test in-1
+  "We select table rows with petal width = 2.  These are rows 0-3,6,7,9
+
+in-1 returns a function that will match rows whose petal-length entry
+matches the petal-length entries of the selection: 1.3, 1.4, 1.5.
+
+We test this function by matching against original table rows 0, 4 and 8.  
+
+Row 0 matches because it has petal lenght of 1.4.  So does row 8:
+petal length of 1.5 is allowed.  But row 4 with petal length of 1.7
+does not match."
+  (let* ((table (loaded-test-table))
+	 (selection (select table :where (matching-rows table '(petal-width 0.2))))
+	 (fun (in-1 'petal-length selection)))
+    (assert-true (not (funcall fun (nth-row table 4))))
+    (assert-true (funcall fun (nth-row table 0)))
+    (assert-true (funcall fun (nth-row table 8)))))
 
 (define-test value
   (let ((table (loaded-test-table)))

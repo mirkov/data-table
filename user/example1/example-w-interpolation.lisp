@@ -102,6 +102,27 @@ are inpredicatable.
 ")
 
 
+#+skip
+(defparameter *fa-table-interp-values-only-1*
+  (select
+   *fa-table*
+   :where
+   (in-1
+    'year
+    (select *fa-table* :where
+	    (matching-rows *fa-table*
+			   `(population not-empty-p equal)))))
+  "This table consists only of interpolated values.
+
+We use the `in-1' function to select the rows from *fa-table* that match
+those of *table-empty-rows*.  We compare the values in the `year'
+columns
+
+This example highlights a usage issue.  I have to be careful to
+specify the same table to `select' and `in'.  Otherwise, the results
+are inpredicatable.
+")
+
 ;;; Part 2
 
 
