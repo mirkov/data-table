@@ -68,6 +68,12 @@
 
 	* column-major-table/cmt-io.lisp (write-table): New function
 
+2013-01-22  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* init/generic-numeric-table.lisp (import-table-from-csv-file):
+	New generic function.  It overlaps with `read-table' which is more
+	general.
+
 2013-01-16  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* init/generic-numeric-table.lisp (): Added object and function
