@@ -6,7 +6,11 @@
 
 ;;; Classes and methods for instantiating column-major tables
 (defclass column-major-table (numeric-table)
-  ((row-count :initform 0))
+  ((row-count :initform 0)
+   (column-name->index :accessor column-name->index
+		       :documentation
+"Function of one argument, column name, that returns the column
+index"))
   (:documentation "Table that contains multiple columns
 
 The table can be expanded by adding both rows and columns"))
@@ -15,14 +19,34 @@ The table can be expanded by adding both rows and columns"))
   (assert-true (make-instance 'column-major-table)))
 
 
+(defun name->index-function (column-major-table-schema)
+  "Return a function of one argument, column-name.
+
+This function will return the column index"
+  (let ((alist
+	 (loop for column-schema in column-major-table-schema
+	    collect (cons (column-name column-schema)
+			  (i-column column-schema)))))
+    (lambda (name)
+      (let ((index (cdr (assoc name alist))))
+	(assert index ()
+		"Name:~a not found in column-table-schema" name)
+	index))))
+
+(define-test name->index-function
+  (let ((fun (name->index-function (test-table-schema))))
+    (assert-equal 2 (funcall fun 'petal-length))))
+
 (defmethod initialize-instance :after ((self column-major-table)
 				       &key
 					 &allow-other-keys)
   #+skip(print 'hello)
-  (with-slots (row-count column-count table-data table-schema) self
+  (with-slots (row-count column-count table-data table-schema
+			 column-name->index) self
     (setf column-count (length table-schema))
     (setf table-data
-	  (make-nested-vector (list row-count column-count))))
+	  (make-nested-vector (list row-count column-count))
+	  column-name->index (name->index-function table-schema)))
     #+skip(print 'good-bye))
 
 (defmethod make-table ((type (eql 'column-major-table)) schema

@@ -1,3 +1,9 @@
+2013-02-05  Mirko Vukovic  <mirko.vukovic@us.tel.com>
+
+	* column-major-table/column-major-table-classes.lisp (name->index-function): New function
+	(column-major-table): Added slot for column->index-function
+	(initialize-instance): Added initialization call for column->index-function
+
 2013-02-03  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
 	* column-major-table/data-access.lisp (copy-columns)
