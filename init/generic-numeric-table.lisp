@@ -77,6 +77,15 @@ This can be a journal reference or something else"))
     (setf (slot-value self 'table-data) it)))
 
 
+(defmethod print-object ((self numeric-table) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~a rows by ~a columns" (row-count self)
+	    (column-count self))))
+
+
+
+#+skip(define-method describe-object ((self numeric-table) stream)
+  )
 
 (defgeneric make-table (type table-schema &key build-method
 			     data-source data-author

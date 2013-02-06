@@ -11,7 +11,8 @@
 	       "antik"
 	       "gsll"
 	       "cl-csv"
-	       "nested-vectors")
+	       "nested-vectors"
+	       "iterate")
   :components
   ((:module "init"
 	    :serial t
@@ -28,6 +29,7 @@
 	     (:file "table-queries")
 	     (:file "matching-functions")
 	     (:file "data-access")
+	     (:file "iterators")
 	     (:file "cmt-io")
 	     (:file "cmt-row")
 	     (:file "foreign-column")

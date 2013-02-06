@@ -1,6 +1,6 @@
 (in-package :numeric-table)
 
-(export '(copy-columns with-columns))
+(export '(copy-columns with-columns do-rows map-rows))
 
 (defmethod table-size ((table column-major-table))
   (list (row-count table) (column-count table)))
@@ -73,3 +73,18 @@
      (symbol-macrolet (,@(loop :for column-name :in column-names
 			      :collect `(,column-name (table-column ',column-name ,table-ref))))
        ,@body))))
+
+(defmacro do-rows ((row table &optional result-form) &body body)
+  (with-gensyms (index row-count)
+    (alexandria:once-only (table)
+      `(let ((,row (nth-row ,table 0))
+	     (,row-count (row-count ,table)))
+	 (dotimes (,index ,row-count ,result-form)
+	   ,@body
+	   (unless (= ,index (1- ,row-count))
+	     (incf (row-index ,row))))))))
+
+(defmethod map-rows (fn (table column-major-table))
+  (iter:iter
+    (iter:for row :in-nt-row table)
+    (iter:collect (funcall fn row))))

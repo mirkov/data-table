@@ -1,5 +1,18 @@
 2013-02-05  Mirko Vukovic  <mirko.vukovic@us.tel.com>
 
+	* column-major-table/cmt-row.lisp (column-value): New function,
+	replacing the old use of the method `value'
+	(with-column-values): New macro
+
+	* column-major-table/data-access.lisp (map-rows, do-rows): New
+	iterating functionality.
+
+	* column-major-table/iterators.lisp (): New file, also added to asdf.
+
+	* numeric-table.asd (#:numeric-table): Added dependency on
+	"iterate" package and iterators file
+
+
 	* column-major-table/column-major-table-classes.lisp (name->index-function): New function
 	(column-major-table): Added slot for column->index-function
 	(initialize-instance): Added initialization call for column->index-function

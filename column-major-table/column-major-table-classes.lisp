@@ -19,6 +19,12 @@ The table can be expanded by adding both rows and columns"))
   (assert-true (make-instance 'column-major-table)))
 
 
+
+(defmethod print-object :after ((self column-major-table) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "build method: ~a" (build-method self))))
+
+
 (defun name->index-function (column-major-table-schema)
   "Return a function of one argument, column-name.
 

@@ -1,5 +1,7 @@
 (in-package :numeric-table)
 
+(export '(with-column-values row-length column-value))
+
 (defclass column-major-table-row ()
   ((numeric-table :accessor numeric-table
 		  :initarg :numeric-table
@@ -44,13 +46,11 @@ to elements of row I")
 		   :numeric-table self
 		   :row-index i)))
 
-(defmethod value ((self column-major-table-row) &key column-name
-						  &allow-other-keys)
+(defmethod column-value ((self column-major-table-row) column-name)
   (vrref (table-data-row self)
 	 (funcall (column-name->index self) column-name)))
 
-(defmethod (setf value) (value (self column-major-table-row) &key column-name
-						  &allow-other-keys)
+(defmethod (setf column-value) (value (self column-major-table-row) column-name)
   (setf (vrref (table-data-row self)
 	       (funcall (column-name->index self) column-name))
 	value))
@@ -58,6 +58,9 @@ to elements of row I")
 
 (defmethod row-length ((self column-major-table-row))
   (column-count (numeric-table self)))
+
+(defmethod row-contents ((self column-major-table-row))
+  (row-contents (table-data-row self)))
 
 (defmethod (setf row-index) :after (value (self column-major-table-row))
   "After setting the slot value, I also set the row-index value of the
@@ -74,3 +77,14 @@ nested-vector row"
     (assert-equal 2 (row-index row))
     (setf (value row :column-name 'sepal-length) 12.0)
     (assert-equal 12.0 (vvref (table-data table) 2 0))))
+
+(defun column-bindings (vars column-major-table-row)
+  (loop :for v :in vars
+       :collect `(,v (column-value ,column-major-table-row ,v))))
+
+(defmacro with-column-values ((&rest vars) row &body body)
+  (alexandria:once-only (row)
+    `(let ,(column-bindings vars row)
+       ,@body)))
+
+
